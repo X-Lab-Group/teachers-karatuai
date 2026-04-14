@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Cpu, RefreshCw, Wifi } from 'lucide-react'
+import { Cpu, RefreshCw, Wifi, HardDrive } from 'lucide-react'
 import { useModel } from '../hooks/useModel'
 import { Button } from './ui'
 
@@ -7,6 +7,30 @@ export default function ModelLoadingScreen() {
   const { status, progress, error, retry } = useModel()
 
   if (status === 'ready') return null
+
+  const isAnimating = status === 'downloading' || status === 'loading' || status === 'checking'
+
+  const getStatusText = () => {
+    switch (status) {
+      case 'checking':
+        return 'Checking for cached model...'
+      case 'downloading':
+        return 'Downloading AI model for offline use. This only happens once.'
+      case 'loading':
+        return 'Loading AI model from cache...'
+      case 'error':
+        return 'Connection Issue'
+      default:
+        return 'Loading AI Model'
+    }
+  }
+
+  const getTitle = () => {
+    if (status === 'error') return 'Connection Issue'
+    if (status === 'loading') return 'Loading from Cache'
+    if (status === 'downloading') return 'Downloading AI Model'
+    return 'Loading AI Model'
+  }
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-teal-50 to-white flex items-center justify-center p-6 z-50">
@@ -16,21 +40,25 @@ export default function ModelLoadingScreen() {
         className="text-center max-w-sm"
       >
         <motion.div
-          animate={{ rotate: status === 'downloading' ? 360 : 0 }}
-          transition={{ duration: 2, repeat: status === 'downloading' ? Infinity : 0, ease: 'linear' }}
+          animate={{ rotate: isAnimating ? 360 : 0 }}
+          transition={{ duration: 2, repeat: isAnimating ? Infinity : 0, ease: 'linear' }}
           className="w-20 h-20 rounded-3xl bg-teal-100 flex items-center justify-center mx-auto mb-6"
         >
-          <Cpu size={40} className="text-teal-600" />
+          {status === 'loading' ? (
+            <HardDrive size={40} className="text-teal-600" />
+          ) : (
+            <Cpu size={40} className="text-teal-600" />
+          )}
         </motion.div>
 
         <h1 className="text-2xl font-bold text-slate-800 mb-2">
-          {status === 'error' ? 'Connection Issue' : 'Loading AI Model'}
+          {getTitle()}
         </h1>
 
-        {status === 'downloading' && (
+        {(status === 'downloading' || status === 'loading' || status === 'checking') && (
           <>
             <p className="text-slate-500 mb-6">
-              Downloading AI model for offline use. This only happens once.
+              {getStatusText()}
             </p>
             <div className="w-full bg-slate-200 rounded-full h-3 mb-2">
               <motion.div
@@ -40,10 +68,18 @@ export default function ModelLoadingScreen() {
                 transition={{ duration: 0.3 }}
               />
             </div>
-            <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
-              <Wifi size={14} />
-              <span>~1.9GB download</span>
-            </div>
+            {status === 'downloading' && (
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
+                <Wifi size={14} />
+                <span>~1.9GB download</span>
+              </div>
+            )}
+            {status === 'loading' && (
+              <div className="flex items-center justify-center gap-2 text-sm text-slate-400">
+                <HardDrive size={14} />
+                <span>Loading from device storage</span>
+              </div>
+            )}
           </>
         )}
 

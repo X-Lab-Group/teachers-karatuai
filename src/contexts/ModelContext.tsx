@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import { FilesetResolver, LlmInference } from '@mediapipe/tasks-genai'
 import { ModelContext } from './model-context'
+import { getCachedModelUrl, isModelCached, MODEL_URL } from '../lib/model-cache'
 
-const MODEL_URL = 'https://storage.googleapis.com/karatuai-models/gemma-4-E2B-it-web.task'
-
-type ModelStatus = 'idle' | 'downloading' | 'ready' | 'error'
+type ModelStatus = 'idle' | 'checking' | 'downloading' | 'loading' | 'ready' | 'error'
 
 let llmInstance: LlmInference | null = null
 
@@ -21,17 +20,36 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    setStatus('downloading')
+    setStatus('checking')
     setError(null)
-    setProgress(5)
+    setProgress(0)
 
     try {
-      setProgress(10)
+      const cached = await isModelCached()
+
+      if (cached) {
+        setStatus('loading')
+        setProgress(50)
+      } else {
+        setStatus('downloading')
+      }
+
+      await getCachedModelUrl((downloadProgress) => {
+        if (!cached) {
+          setProgress(Math.round(downloadProgress * 0.8))
+        }
+      })
+
+      if (!cached) {
+        setStatus('loading')
+      }
+      setProgress(85)
+
       const genai = await FilesetResolver.forGenAiTasks(
         'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai/wasm'
       )
 
-      setProgress(20)
+      setProgress(90)
 
       llmInstance = await LlmInference.createFromOptions(genai, {
         baseOptions: {

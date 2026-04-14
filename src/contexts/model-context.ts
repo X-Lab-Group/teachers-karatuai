@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 
-type ModelStatus = 'idle' | 'downloading' | 'ready' | 'error'
+type ModelStatus = 'idle' | 'checking' | 'downloading' | 'loading' | 'ready' | 'error'
 
 export interface ModelContextValue {
   status: ModelStatus
