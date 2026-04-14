@@ -35,14 +35,14 @@ export async function getCachedModelUrl(
     }
 
     const reader = response.body.getReader()
-    const chunks: Uint8Array[] = []
+    const chunks: ArrayBuffer[] = []
     let received = 0
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
 
-      chunks.push(value)
+      chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength))
       received += value.length
 
       if (total > 0) {
