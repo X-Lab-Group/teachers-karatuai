@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ClipboardCheck, Plus, Trash2, Sparkles, Copy, Download, Check } from 'lucide-react'
+import { ClipboardCheck, Plus, Trash2, Sparkles, Copy, Download, Check, Eye } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Button, Card, Input, Select } from '../components/ui'
 import { useModel } from '../hooks/useModel'
@@ -35,6 +35,7 @@ export default function AssessmentsPage() {
   const [showForm, setShowForm] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedContent, setGeneratedContent] = useState('')
+  const [viewing, setViewing] = useState<Assessment | null>(null)
   const [formData, setFormData] = useState({
     topic: '',
     subject: '' as Subject | '',
@@ -133,11 +134,13 @@ export default function AssessmentsPage() {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
       }
-      setGeneratedContent(bufferRef.current)
+      const finalContent = bufferRef.current
+      setGeneratedContent(finalContent)
 
       const assessment: Assessment = {
         id: crypto.randomUUID(),
         title: formData.topic,
+        content: finalContent,
         type: formData.assessmentType,
         questions: [],
         level: formData.level as EducationLevel,
@@ -162,6 +165,7 @@ export default function AssessmentsPage() {
   const handleReset = () => {
     setShowForm(true)
     setGeneratedContent('')
+    setViewing(null)
     setFormData({
       topic: '',
       subject: '',
@@ -169,6 +173,56 @@ export default function AssessmentsPage() {
       assessmentType: 'quiz',
       questionCount: '10',
     })
+  }
+
+  if (viewing) {
+    const content = viewing.content ?? ''
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-6"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-slate-800 truncate pr-3">{viewing.title}</h2>
+          <Button variant="ghost" onClick={() => setViewing(null)}>
+            Back
+          </Button>
+        </div>
+        <Card hover={false}>
+          {content ? (
+            <div className="prose prose-slate max-w-none">
+              <ReactMarkdown>{content}</ReactMarkdown>
+            </div>
+          ) : (
+            <p className="text-slate-500 text-sm">
+              This assessment was saved before content was preserved. Delete and recreate to view
+              the full questions.
+            </p>
+          )}
+          {content && (
+            <div className="mt-6 flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => handleCopy(content)}
+                icon={copied ? <Check size={18} /> : <Copy size={18} />}
+                className="flex-1"
+              >
+                {copied ? 'Copied!' : 'Copy'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => handleExportPDF(content, viewing.title)}
+                icon={<Download size={18} />}
+                className="flex-1"
+              >
+                Export PDF
+              </Button>
+            </div>
+          )}
+        </Card>
+      </motion.div>
+    )
   }
 
   if (showForm || isGenerating || generatedContent) {
@@ -351,19 +405,30 @@ export default function AssessmentsPage() {
         {assessments?.map((assessment, index) => (
           <Card key={assessment.id} delay={index}>
             <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="font-semibold text-slate-800 text-lg">{assessment.title}</h3>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-slate-800 text-lg truncate">{assessment.title}</h3>
                 <p className="text-sm text-slate-500 mt-1 capitalize">{assessment.type}</p>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleDelete(assessment.id)}
-                className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors"
-                aria-label="Delete assessment"
-              >
-                <Trash2 size={18} />
-              </motion.button>
+              <div className="flex gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setViewing(assessment)}
+                  className="p-2 rounded-xl bg-pink-50 text-pink-500 hover:bg-pink-100 transition-colors"
+                  aria-label="View assessment"
+                >
+                  <Eye size={18} />
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleDelete(assessment.id)}
+                  className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  aria-label="Delete assessment"
+                >
+                  <Trash2 size={18} />
+                </motion.button>
+              </div>
             </div>
           </Card>
         ))}

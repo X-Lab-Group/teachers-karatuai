@@ -39,6 +39,7 @@ export interface Activity {
   id: string
   title: string
   description: string
+  content: string
   type: 'individual' | 'group' | 'class'
   duration: number
   materials: string[]
@@ -51,6 +52,7 @@ export interface Activity {
 export interface Assessment {
   id: string
   title: string
+  content: string
   type: 'quiz' | 'test' | 'worksheet' | 'rubric'
   questions: AssessmentQuestion[]
   level: EducationLevel
