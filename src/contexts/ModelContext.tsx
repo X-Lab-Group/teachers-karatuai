@@ -7,10 +7,22 @@ import {
   type ModelStatusValue,
   type ModelActionsValue,
 } from './model-context'
-import { getCachedModelUrl, isModelCached } from '../lib/model-cache'
+import { getCachedModelUrl, isModelCached, clearModelCache } from '../lib/model-cache'
+
+const INIT_TIMEOUT_MS = 120_000
 
 let llmInstance: LlmInference | null = null
 let modelObjectUrl: string | null = null
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), ms)
+  })
+  return Promise.race([promise, timeout]).finally(() => {
+    if (timer) clearTimeout(timer)
+  }) as Promise<T>
+}
 
 export default function ModelProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ModelStatus>('idle')
@@ -29,10 +41,12 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
     setError(null)
     setProgress(0)
 
-    try {
-      const cached = await isModelCached()
+    let loadedFromCache = false
 
-      if (cached) {
+    try {
+      loadedFromCache = await isModelCached()
+
+      if (loadedFromCache) {
         setStatus('loading')
         setProgress(50)
       } else {
@@ -40,7 +54,7 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
       }
 
       const modelUrl = await getCachedModelUrl((downloadProgress) => {
-        if (!cached) {
+        if (!loadedFromCache) {
           setProgress(Math.round(downloadProgress * 0.8))
         }
       })
@@ -50,7 +64,7 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
       }
       modelObjectUrl = modelUrl.startsWith('blob:') ? modelUrl : null
 
-      if (!cached) {
+      if (!loadedFromCache) {
         setStatus('loading')
       }
       setProgress(85)
@@ -61,22 +75,32 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
 
       setProgress(90)
 
-      llmInstance = await LlmInference.createFromOptions(genai, {
-        baseOptions: {
-          modelAssetPath: modelUrl,
-        },
-        maxTokens: 2048,
-        topK: 40,
-        temperature: 0.7,
-        randomSeed: Date.now(),
-      })
+      llmInstance = await withTimeout(
+        LlmInference.createFromOptions(genai, {
+          baseOptions: {
+            modelAssetPath: modelUrl,
+          },
+          maxTokens: 2048,
+          topK: 40,
+          temperature: 0.7,
+          randomSeed: Date.now(),
+        }),
+        INIT_TIMEOUT_MS,
+        'Model loading timed out. Please check your connection and try again.',
+      )
 
       setStatus('ready')
       setProgress(100)
     } catch (err) {
       console.error('Model initialization error:', err)
-      const errorMsg = err instanceof Error ? err.message : 'Failed to load AI model'
-      setError(errorMsg)
+      if (loadedFromCache) {
+        await clearModelCache().catch(() => undefined)
+      }
+      const baseMsg = err instanceof Error ? err.message : 'Failed to load AI model'
+      const suffix = loadedFromCache
+        ? ' Cached model was cleared — try again to re-download.'
+        : ''
+      setError(baseMsg + suffix)
       setStatus('error')
       setProgress(0)
     }
