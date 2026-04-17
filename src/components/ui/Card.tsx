@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { memo, type ReactNode } from 'react'
 import { motion } from 'framer-motion'
 
 interface CardProps {
@@ -12,7 +12,13 @@ interface CardProps {
   className?: string
 }
 
-export default function Card({
+const INITIAL = { opacity: 0, y: 20 }
+const ANIMATE = { opacity: 1, y: 0 }
+const HOVER = { scale: 1.02, y: -8 }
+const NO_HOVER = {}
+const MAX_STAGGER_DELAY = 0.4
+
+function Card({
   title,
   subtitle,
   actions,
@@ -25,13 +31,18 @@ export default function Card({
   const baseClasses =
     'bg-white rounded-3xl border border-slate-200 shadow-lg overflow-hidden'
   const variantClasses = variant === '3d' ? 'card-3d' : ''
+  const transition = {
+    duration: 0.4,
+    delay: Math.min(delay * 0.05, MAX_STAGGER_DELAY),
+    ease: 'easeOut' as const,
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: delay * 0.1, ease: 'easeOut' }}
-      whileHover={hover ? { scale: 1.02, y: -8, boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)' } : {}}
+      initial={INITIAL}
+      animate={ANIMATE}
+      transition={transition}
+      whileHover={hover ? HOVER : NO_HOVER}
       className={`${baseClasses} ${variantClasses} ${className}`}
     >
       <div className="p-6 md:p-8">
@@ -55,3 +66,5 @@ export default function Card({
     </motion.div>
   )
 }
+
+export default memo(Card)

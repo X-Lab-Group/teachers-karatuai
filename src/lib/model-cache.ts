@@ -1,6 +1,11 @@
 const CACHE_NAME = 'karatuai-model-cache-v1'
 const MODEL_URL = 'https://storage.googleapis.com/karatuai-models/gemma-4-E2B-it-web.task'
 
+async function responseToBlobUrl(response: Response): Promise<string> {
+  const blob = await response.blob()
+  return URL.createObjectURL(blob)
+}
+
 export async function getCachedModelUrl(
   onProgress?: (progress: number) => void
 ): Promise<string> {
@@ -14,7 +19,7 @@ export async function getCachedModelUrl(
 
     if (cachedResponse) {
       onProgress?.(100)
-      return MODEL_URL
+      return responseToBlobUrl(cachedResponse)
     }
 
     onProgress?.(5)
@@ -24,26 +29,33 @@ export async function getCachedModelUrl(
       throw new Error(`Failed to fetch model: ${response.status}`)
     }
 
+    if (!response.body) {
+      await cache.put(MODEL_URL, response.clone())
+      onProgress?.(100)
+      const fresh = await cache.match(MODEL_URL)
+      if (!fresh) throw new Error('Cache miss after put')
+      return responseToBlobUrl(fresh)
+    }
+
     const contentLength = response.headers.get('content-length')
     const total = contentLength ? parseInt(contentLength, 10) : 0
 
-    if (!response.body) {
-      const clonedResponse = response.clone()
-      await cache.put(MODEL_URL, clonedResponse)
-      onProgress?.(100)
-      return MODEL_URL
-    }
+    const [forCache, forProgress] = response.body.tee()
 
-    const reader = response.body.getReader()
-    const chunks: ArrayBuffer[] = []
+    const cacheResponse = new Response(forCache, {
+      headers: response.headers,
+      status: response.status,
+      statusText: response.statusText,
+    })
+    const cachePut = cache.put(MODEL_URL, cacheResponse)
+
+    const reader = forProgress.getReader()
     let received = 0
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-
-      chunks.push(value.buffer.slice(value.byteOffset, value.byteOffset + value.byteLength))
-      received += value.length
+      received += value.byteLength
 
       if (total > 0) {
         const progress = Math.min(95, Math.round((received / total) * 90) + 5)
@@ -51,18 +63,12 @@ export async function getCachedModelUrl(
       }
     }
 
-    const blob = new Blob(chunks)
-    const cachedResponseToStore = new Response(blob, {
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Length': String(blob.size),
-      },
-    })
-
-    await cache.put(MODEL_URL, cachedResponseToStore)
+    await cachePut
     onProgress?.(100)
 
-    return MODEL_URL
+    const fresh = await cache.match(MODEL_URL)
+    if (!fresh) throw new Error('Cache miss after put')
+    return responseToBlobUrl(fresh)
   } catch (error) {
     console.error('Cache error, falling back to direct URL:', error)
     return MODEL_URL

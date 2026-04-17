@@ -1,8 +1,12 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useModel } from './useModel'
 import { buildLessonPlanPrompt } from '../lib/prompts/lesson-plan'
 import { saveLessonPlan } from '../lib/db'
 import type { EducationLevel, Subject, LessonPlan } from '../types'
+
+const SECTION_REGEX_CACHE = new Map<string, RegExp>()
+const TEXT_SECTION_REGEX_CACHE = new Map<string, RegExp>()
+const LIST_PREFIX_REGEX = /^[-*•\d.)\s]+/
 
 interface GeneratorInput {
   topic: string
@@ -27,23 +31,46 @@ export function useLessonGenerator() {
     error: null,
   })
 
+  const bufferRef = useRef('')
+  const rafRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+      }
+    }
+  }, [])
+
   const generate = useCallback(async (input: GeneratorInput): Promise<LessonPlan | null> => {
     if (!isReady) {
       setState({ isGenerating: false, streamedContent: '', error: 'AI model is still loading' })
       return null
     }
 
+    bufferRef.current = ''
     setState({ isGenerating: true, streamedContent: '', error: null })
+
+    const flush = () => {
+      rafRef.current = null
+      const next = bufferRef.current
+      setState((prev) => (prev.streamedContent === next ? prev : { ...prev, streamedContent: next }))
+    }
 
     try {
       const prompt = buildLessonPlanPrompt(input)
 
       const content = await modelGenerate(prompt, (token: string) => {
-        setState((prev) => ({
-          ...prev,
-          streamedContent: prev.streamedContent + token,
-        }))
+        bufferRef.current += token
+        if (rafRef.current === null) {
+          rafRef.current = requestAnimationFrame(flush)
+        }
       })
+
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
 
       const lessonPlan: LessonPlan = {
         id: crypto.randomUUID(),
@@ -68,6 +95,10 @@ export function useLessonGenerator() {
       setState({ isGenerating: false, streamedContent: content, error: null })
       return lessonPlan
     } catch (err) {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
       const errorMsg = err instanceof Error ? err.message : 'Failed to generate lesson plan'
       setState({ isGenerating: false, streamedContent: '', error: errorMsg })
       return null
@@ -75,6 +106,11 @@ export function useLessonGenerator() {
   }, [modelGenerate, isReady])
 
   const reset = useCallback(() => {
+    bufferRef.current = ''
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = null
+    }
     setState({ isGenerating: false, streamedContent: '', error: null })
   }, [])
 
@@ -85,19 +121,35 @@ export function useLessonGenerator() {
   }
 }
 
+function getSectionRegex(sectionName: string): RegExp {
+  let regex = SECTION_REGEX_CACHE.get(sectionName)
+  if (!regex) {
+    regex = new RegExp(`${sectionName}[:\\s]*([\\s\\S]*?)(?=\\n#|\\n\\d\\.|$)`, 'i')
+    SECTION_REGEX_CACHE.set(sectionName, regex)
+  }
+  return regex
+}
+
+function getTextSectionRegex(sectionName: string): RegExp {
+  let regex = TEXT_SECTION_REGEX_CACHE.get(sectionName)
+  if (!regex) {
+    regex = new RegExp(`${sectionName}[:\\s]*([\\s\\S]*?)(?=\\n#{1,3}\\s|$)`, 'i')
+    TEXT_SECTION_REGEX_CACHE.set(sectionName, regex)
+  }
+  return regex
+}
+
 function extractSection(content: string, sectionName: string): string[] {
-  const regex = new RegExp(`${sectionName}[:\\s]*([\\s\\S]*?)(?=\\n#|\\n\\d\\.|$)`, 'i')
-  const match = content.match(regex)
+  const match = content.match(getSectionRegex(sectionName))
   if (!match) return []
 
   return match[1]
     .split('\n')
-    .map((line) => line.replace(/^[-*•\d.)\s]+/, '').trim())
+    .map((line) => line.replace(LIST_PREFIX_REGEX, '').trim())
     .filter((line) => line.length > 0)
 }
 
 function extractTextSection(content: string, sectionName: string): string {
-  const regex = new RegExp(`${sectionName}[:\\s]*([\\s\\S]*?)(?=\\n#{1,3}\\s|$)`, 'i')
-  const match = content.match(regex)
+  const match = content.match(getTextSectionRegex(sectionName))
   return match ? match[1].trim() : ''
 }

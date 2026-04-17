@@ -1,13 +1,19 @@
 import { motion } from 'framer-motion'
 import { Cpu, RefreshCw, Wifi, HardDrive } from 'lucide-react'
-import { useModel } from '../hooks/useModel'
+import { useModel, useModelStatus } from '../hooks/useModel'
 import { Button } from './ui'
 
-export default function ModelLoadingScreen() {
+const SCALE_INITIAL = { opacity: 0, scale: 0.9 }
+const SCALE_ANIMATE = { opacity: 1, scale: 1 }
+const ROTATE_360 = { rotate: 360 }
+const ROTATE_0 = { rotate: 0 }
+const PROGRESS_INITIAL = { width: 0 }
+const PROGRESS_TRANSITION = { duration: 0.3 }
+const ROTATE_LINEAR = { duration: 2, repeat: Infinity, ease: 'linear' as const }
+const ROTATE_NONE = { duration: 2, repeat: 0, ease: 'linear' as const }
+
+function LoadingOverlay() {
   const { status, progress, error, retry } = useModel()
-
-  if (status === 'ready') return null
-
   const isAnimating = status === 'downloading' || status === 'loading' || status === 'checking'
 
   const getStatusText = () => {
@@ -35,13 +41,13 @@ export default function ModelLoadingScreen() {
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-teal-50 to-white flex items-center justify-center p-6 z-50">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={SCALE_INITIAL}
+        animate={SCALE_ANIMATE}
         className="text-center max-w-sm"
       >
         <motion.div
-          animate={{ rotate: isAnimating ? 360 : 0 }}
-          transition={{ duration: 2, repeat: isAnimating ? Infinity : 0, ease: 'linear' }}
+          animate={isAnimating ? ROTATE_360 : ROTATE_0}
+          transition={isAnimating ? ROTATE_LINEAR : ROTATE_NONE}
           className="w-20 h-20 rounded-3xl bg-teal-100 flex items-center justify-center mx-auto mb-6"
         >
           {status === 'loading' ? (
@@ -63,9 +69,9 @@ export default function ModelLoadingScreen() {
             <div className="w-full bg-slate-200 rounded-full h-3 mb-2">
               <motion.div
                 className="bg-teal-500 h-3 rounded-full"
-                initial={{ width: 0 }}
+                initial={PROGRESS_INITIAL}
                 animate={{ width: `${Math.max(progress, 5)}%` }}
-                transition={{ duration: 0.3 }}
+                transition={PROGRESS_TRANSITION}
               />
             </div>
             {status === 'downloading' && (
@@ -96,4 +102,10 @@ export default function ModelLoadingScreen() {
       </motion.div>
     </div>
   )
+}
+
+export default function ModelLoadingScreen() {
+  const { isReady } = useModelStatus()
+  if (isReady) return null
+  return <LoadingOverlay />
 }

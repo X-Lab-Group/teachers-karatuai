@@ -1,14 +1,18 @@
 import { createContext } from 'react'
 
-type ModelStatus = 'idle' | 'checking' | 'downloading' | 'loading' | 'ready' | 'error'
+export type ModelStatus = 'idle' | 'checking' | 'downloading' | 'loading' | 'ready' | 'error'
 
-export interface ModelContextValue {
+export interface ModelStatusValue {
   status: ModelStatus
   progress: number
   error: string | null
   isReady: boolean
+}
+
+export interface ModelActionsValue {
   generate: (prompt: string, onToken?: (token: string) => void) => Promise<string>
   retry: () => void
 }
 
-export const ModelContext = createContext<ModelContextValue | null>(null)
+export const ModelStatusContext = createContext<ModelStatusValue | null>(null)
+export const ModelActionsContext = createContext<ModelActionsValue | null>(null)

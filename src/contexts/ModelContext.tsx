@@ -1,11 +1,16 @@
-import { useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react'
 import { FilesetResolver, LlmInference } from '@mediapipe/tasks-genai'
-import { ModelContext } from './model-context'
-import { getCachedModelUrl, isModelCached, MODEL_URL } from '../lib/model-cache'
-
-type ModelStatus = 'idle' | 'checking' | 'downloading' | 'loading' | 'ready' | 'error'
+import {
+  ModelStatusContext,
+  ModelActionsContext,
+  type ModelStatus,
+  type ModelStatusValue,
+  type ModelActionsValue,
+} from './model-context'
+import { getCachedModelUrl, isModelCached } from '../lib/model-cache'
 
 let llmInstance: LlmInference | null = null
+let modelObjectUrl: string | null = null
 
 export default function ModelProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<ModelStatus>('idle')
@@ -34,11 +39,16 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
         setStatus('downloading')
       }
 
-      await getCachedModelUrl((downloadProgress) => {
+      const modelUrl = await getCachedModelUrl((downloadProgress) => {
         if (!cached) {
           setProgress(Math.round(downloadProgress * 0.8))
         }
       })
+
+      if (modelObjectUrl && modelObjectUrl !== modelUrl) {
+        URL.revokeObjectURL(modelObjectUrl)
+      }
+      modelObjectUrl = modelUrl.startsWith('blob:') ? modelUrl : null
 
       if (!cached) {
         setStatus('loading')
@@ -53,7 +63,7 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
 
       llmInstance = await LlmInference.createFromOptions(genai, {
         baseOptions: {
-          modelAssetPath: MODEL_URL,
+          modelAssetPath: modelUrl,
         },
         maxTokens: 2048,
         topK: 40,
@@ -107,18 +117,21 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
     initializeModel()
   }, [initializeModel])
 
+  const statusValue = useMemo<ModelStatusValue>(
+    () => ({ status, progress, error, isReady: status === 'ready' }),
+    [status, progress, error]
+  )
+
+  const actionsValue = useMemo<ModelActionsValue>(
+    () => ({ generate, retry }),
+    [generate, retry]
+  )
+
   return (
-    <ModelContext.Provider
-      value={{
-        status,
-        progress,
-        error,
-        isReady: status === 'ready',
-        generate,
-        retry,
-      }}
-    >
-      {children}
-    </ModelContext.Provider>
+    <ModelActionsContext.Provider value={actionsValue}>
+      <ModelStatusContext.Provider value={statusValue}>
+        {children}
+      </ModelStatusContext.Provider>
+    </ModelActionsContext.Provider>
   )
 }

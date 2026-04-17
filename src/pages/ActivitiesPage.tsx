@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Lightbulb, Plus, Trash2, Sparkles, Copy, Download, Check } from 'lucide-react'
@@ -46,6 +46,14 @@ export default function ActivitiesPage() {
 
   const activities = useLiveQuery(() => getActivities(), [])
   const [copied, setCopied] = useState(false)
+  const bufferRef = useRef('')
+  const rafRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+    }
+  }, [])
 
   const handleCopy = async (content: string) => {
     try {
@@ -96,6 +104,13 @@ export default function ActivitiesPage() {
 
     setIsGenerating(true)
     setGeneratedContent('')
+    bufferRef.current = ''
+
+    const flush = () => {
+      rafRef.current = null
+      const next = bufferRef.current
+      setGeneratedContent((prev) => (prev === next ? prev : next))
+    }
 
     try {
       const prompt = buildActivityPrompt({
@@ -107,8 +122,17 @@ export default function ActivitiesPage() {
       })
 
       await generate(prompt, (token: string) => {
-        setGeneratedContent((prev) => prev + token)
+        bufferRef.current += token
+        if (rafRef.current === null) {
+          rafRef.current = requestAnimationFrame(flush)
+        }
       })
+
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
+      setGeneratedContent(bufferRef.current)
 
       const activity: Activity = {
         id: crypto.randomUUID(),
@@ -247,7 +271,13 @@ export default function ActivitiesPage() {
                   </div>
                 )}
                 <div className="prose prose-slate max-w-none">
-                  <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                  {isGenerating ? (
+                    <div className="whitespace-pre-wrap font-sans text-slate-700 text-sm leading-relaxed">
+                      {generatedContent}
+                    </div>
+                  ) : (
+                    <ReactMarkdown>{generatedContent}</ReactMarkdown>
+                  )}
                 </div>
                 {!isGenerating && generatedContent && (
                   <>

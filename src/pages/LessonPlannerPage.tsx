@@ -41,6 +41,12 @@ const DURATIONS = [
   { value: '120', label: '2 hours' },
 ]
 
+const DATE_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+})
+
 export default function LessonPlannerPage() {
   const [showForm, setShowForm] = useState(false)
   const [viewingPlan, setViewingPlan] = useState<string | null>(null)
@@ -309,7 +315,13 @@ export default function LessonPlannerPage() {
                   </div>
                 )}
                 <div className="prose prose-slate max-w-none">
-                  <ReactMarkdown>{streamedContent}</ReactMarkdown>
+                  {isGenerating ? (
+                    <div className="whitespace-pre-wrap font-sans text-slate-700 text-sm leading-relaxed">
+                      {streamedContent}
+                    </div>
+                  ) : (
+                    <ReactMarkdown>{streamedContent}</ReactMarkdown>
+                  )}
                 </div>
                 {!isGenerating && streamedContent && (
                   <>
@@ -387,7 +399,7 @@ export default function LessonPlannerPage() {
                 <h3 className="font-semibold text-slate-800 text-lg">{plan.title}</h3>
                 <p className="text-sm text-slate-500 mt-1">
                   {plan.grade} &bull; {plan.duration} mins &bull;{' '}
-                  {new Date(plan.createdAt).toLocaleDateString()}
+                  {DATE_FORMATTER.format(new Date(plan.createdAt))}
                 </p>
               </div>
               <div className="flex gap-2">

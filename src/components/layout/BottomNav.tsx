@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { BookOpen, Lightbulb, ClipboardCheck, Settings } from 'lucide-react'
@@ -7,7 +8,7 @@ const navItems = [
   { to: '/activities', icon: Lightbulb, label: 'Activities', color: 'amber' },
   { to: '/assessments', icon: ClipboardCheck, label: 'Tests', color: 'pink' },
   { to: '/settings', icon: Settings, label: 'Settings', color: 'blue' },
-]
+] as const
 
 const colorClasses = {
   teal: 'text-teal-500 bg-teal-50',
@@ -16,7 +17,12 @@ const colorClasses = {
   blue: 'text-blue-500 bg-blue-50',
 }
 
-export default function BottomNav() {
+const TAP = { scale: 0.95 }
+const ACTIVE_Y = { y: -2 }
+const INACTIVE_Y = { y: 0 }
+const SPRING = { type: 'spring' as const, stiffness: 500 }
+
+function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-slate-200 safe-area-pb">
       <div className="flex items-center justify-around max-w-lg mx-auto px-2 py-2">
@@ -28,14 +34,14 @@ export default function BottomNav() {
           >
             {({ isActive }) => (
               <motion.div
-                whileTap={{ scale: 0.95 }}
+                whileTap={TAP}
                 className={`flex flex-col items-center justify-center py-2 px-3 rounded-2xl transition-all ${
-                  isActive ? colorClasses[color as keyof typeof colorClasses] : 'text-slate-400'
+                  isActive ? colorClasses[color] : 'text-slate-400'
                 }`}
               >
                 <motion.div
-                  animate={isActive ? { y: -2 } : { y: 0 }}
-                  transition={{ type: 'spring', stiffness: 500 }}
+                  animate={isActive ? ACTIVE_Y : INACTIVE_Y}
+                  transition={SPRING}
                 >
                   <Icon size={24} strokeWidth={isActive ? 2.5 : 1.5} />
                 </motion.div>
@@ -50,3 +56,5 @@ export default function BottomNav() {
     </nav>
   )
 }
+
+export default memo(BottomNav)
