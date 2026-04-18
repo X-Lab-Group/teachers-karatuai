@@ -1,5 +1,9 @@
-const CACHE_NAME = 'karatuai-model-cache-v3'
-const LEGACY_CACHE_NAMES = ['karatuai-model-cache-v1', 'karatuai-model-cache-v2']
+const CACHE_NAME = 'karatuai-model-cache-v4'
+const LEGACY_CACHE_NAMES = [
+  'karatuai-model-cache-v1',
+  'karatuai-model-cache-v2',
+  'karatuai-model-cache-v3',
+]
 const MODEL_URL = 'https://models.karatuai.com/gemma-4-E2B-it-web.task'
 const EXPECTED_SIZE = 2_003_697_664
 
