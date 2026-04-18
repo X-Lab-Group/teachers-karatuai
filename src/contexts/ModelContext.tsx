@@ -122,18 +122,23 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
       throw new Error('Model not ready')
     }
 
-    let lastLength = 0
+    let cumulative = ''
     const response = await llmInstance.generateResponse(
       prompt,
       (partialResult: string) => {
-        if (onToken && partialResult && partialResult.length > lastLength) {
-          const newContent = partialResult.slice(lastLength)
-          onToken(newContent)
-          lastLength = partialResult.length
+        if (!partialResult) return
+        let delta: string
+        if (partialResult.startsWith(cumulative)) {
+          delta = partialResult.slice(cumulative.length)
+          cumulative = partialResult
+        } else {
+          delta = partialResult
+          cumulative += partialResult
         }
+        if (delta && onToken) onToken(delta)
       }
     )
-    return response
+    return response || cumulative
   }, [])
 
   const retry = useCallback(() => {

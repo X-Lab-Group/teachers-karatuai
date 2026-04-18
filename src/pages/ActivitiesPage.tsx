@@ -105,7 +105,7 @@ export default function ActivitiesPage() {
         localContext,
       })
 
-      await generate(prompt, (token: string) => {
+      const response = await generate(prompt, (token: string) => {
         bufferRef.current += token
         if (rafRef.current === null) {
           rafRef.current = requestAnimationFrame(flush)
@@ -116,7 +116,7 @@ export default function ActivitiesPage() {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
       }
-      const finalContent = bufferRef.current
+      const finalContent = response || bufferRef.current
       setGeneratedContent(finalContent)
 
       const activity: Activity = {
