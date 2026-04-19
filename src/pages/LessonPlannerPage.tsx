@@ -15,6 +15,7 @@ import {
   CalendarRange,
   Lightbulb,
   ClipboardCheck,
+  FileText,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Button, Card, Input, Select, TextArea } from '../components/ui'
@@ -26,8 +27,11 @@ import {
   getActivitiesByLessonId,
   getAssessmentsByLessonId,
   getScheme,
+  getSettings,
+  findCurriculum,
 } from '../lib/db'
 import { exportAsPDF } from '../lib/print'
+import { buildCurriculumContextSection } from '../lib/curriculum-context'
 import { SUBJECTS, LEVELS } from '../lib/constants'
 import type { EducationLevel, Subject, LessonPlan } from '../types'
 
@@ -96,6 +100,19 @@ export default function LessonPlannerPage() {
   const { isGenerating, streamedContent, error, generate, reset } = useLessonGenerator()
   const lessonPlans = useLiveQuery(() => getLessonPlans(), [])
   const localContext = useLocalContext()
+  const country = useLiveQuery(() => getSettings().then((s) => s.country), [])
+  const matchedCurriculum = useLiveQuery(
+    () =>
+      country && formData.subject && formData.level && formData.grade
+        ? findCurriculum({
+            country,
+            level: formData.level as EducationLevel,
+            subject: formData.subject as Subject,
+            grade: formData.grade,
+          })
+        : undefined,
+    [country, formData.subject, formData.level, formData.grade],
+  )
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -108,6 +125,12 @@ export default function LessonPlannerPage() {
     e.preventDefault()
     if (!formData.topic || !formData.subject || !formData.level) return
 
+    const curriculumSection = buildCurriculumContextSection({
+      curriculum: matchedCurriculum,
+      topic: formData.topic,
+      weekNumber: parentScheme?.weekNumber,
+      tokenBudget: 1500,
+    })
     const plan = await generate({
       topic: formData.topic,
       subject: formData.subject as Subject,
@@ -116,6 +139,7 @@ export default function LessonPlannerPage() {
       duration: parseInt(formData.duration),
       additionalContext: formData.additionalContext,
       localContext,
+      curriculumSection,
       schemeId: parentScheme?.schemeId,
       weekNumber: parentScheme?.weekNumber,
       weekTopic: parentScheme?.weekTopic,
@@ -304,6 +328,16 @@ export default function LessonPlannerPage() {
                 onChange={(e) => setFormData({ ...formData, additionalContext: e.target.value })}
                 rows={3}
               />
+
+              {matchedCurriculum && (
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-emerald-50 text-emerald-700 text-sm">
+                  <FileText size={16} className="shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">Curriculum loaded</p>
+                    <p className="text-emerald-600 text-xs truncate">{matchedCurriculum.title}</p>
+                  </div>
+                </div>
+              )}
 
               {error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm">

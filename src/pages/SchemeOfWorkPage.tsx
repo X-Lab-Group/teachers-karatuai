@@ -20,9 +20,17 @@ import { Button, Card, Input, Select } from '../components/ui'
 import { useModel } from '../hooks/useModel'
 import { useLocalContext } from '../hooks/useLocalContext'
 import { buildSchemePrompt } from '../lib/prompts/lesson-plan'
-import { getSchemes, saveScheme, deleteScheme, getLessonsBySchemeId } from '../lib/db'
+import {
+  getSchemes,
+  saveScheme,
+  deleteScheme,
+  getLessonsBySchemeId,
+  findCurriculum,
+  getSettings,
+} from '../lib/db'
 import { exportAsPDF } from '../lib/print'
 import { parseSchemeWeeks } from '../lib/scheme-parser'
+import { buildCurriculumContextSection } from '../lib/curriculum-context'
 import { SUBJECTS, LEVELS } from '../lib/constants'
 import type { EducationLevel, Subject, Term, SchemeOfWork } from '../types'
 
@@ -50,6 +58,19 @@ export default function SchemeOfWorkPage() {
 
   const schemes = useLiveQuery(() => getSchemes(), [])
   const localContext = useLocalContext()
+  const country = useLiveQuery(() => getSettings().then((s) => s.country), [])
+  const matchedCurriculum = useLiveQuery(
+    () =>
+      country && formData.subject && formData.level && formData.grade
+        ? findCurriculum({
+            country,
+            level: formData.level as EducationLevel,
+            subject: formData.subject as Subject,
+            grade: formData.grade,
+          })
+        : undefined,
+    [country, formData.subject, formData.level, formData.grade],
+  )
   const [copied, setCopied] = useState(false)
   const bufferRef = useRef('')
   const rafRef = useRef<number | null>(null)
@@ -98,6 +119,10 @@ export default function SchemeOfWorkPage() {
 
     try {
       const weekCount = parseInt(formData.weekCount)
+      const curriculumSection = buildCurriculumContextSection({
+        curriculum: matchedCurriculum,
+        tokenBudget: 2500,
+      })
       const prompt = buildSchemePrompt({
         subject: formData.subject as Subject,
         level: formData.level as EducationLevel,
@@ -105,6 +130,7 @@ export default function SchemeOfWorkPage() {
         term: formData.term,
         weekCount,
         localContext,
+        curriculumSection,
       })
 
       const response = await generate(prompt, (token: string) => {
@@ -265,6 +291,16 @@ export default function SchemeOfWorkPage() {
                 onChange={(e) => setFormData({ ...formData, weekCount: e.target.value })}
                 helpText="Most African school terms run 10-13 weeks"
               />
+
+              {matchedCurriculum && (
+                <div className="flex items-start gap-3 p-3 rounded-2xl bg-emerald-50 text-emerald-700 text-sm">
+                  <FileText size={16} className="shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="font-semibold truncate">Curriculum loaded</p>
+                    <p className="text-emerald-600 text-xs truncate">{matchedCurriculum.title}</p>
+                  </div>
+                </div>
+              )}
 
               <Button type="submit" className="w-full" size="lg" icon={<Sparkles size={20} />}>
                 Generate Scheme of Work

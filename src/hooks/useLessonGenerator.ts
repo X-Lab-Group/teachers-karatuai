@@ -16,6 +16,7 @@ interface GeneratorInput {
   duration: number
   additionalContext?: string
   localContext?: LocalContext
+  curriculumSection?: string
   schemeId?: string
   weekNumber?: number
   weekTopic?: string

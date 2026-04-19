@@ -27,6 +27,7 @@ const LessonPlannerPage = lazyWithReload(() => import('./pages/LessonPlannerPage
 const ActivitiesPage = lazyWithReload(() => import('./pages/ActivitiesPage'))
 const AssessmentsPage = lazyWithReload(() => import('./pages/AssessmentsPage'))
 const SchemeOfWorkPage = lazyWithReload(() => import('./pages/SchemeOfWorkPage'))
+const CurriculumLibraryPage = lazyWithReload(() => import('./pages/CurriculumLibraryPage'))
 const SettingsPage = lazyWithReload(() => import('./pages/SettingsPage'))
 
 export default function App() {
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="activities" element={<ActivitiesPage />} />
               <Route path="assessments" element={<AssessmentsPage />} />
               <Route path="scheme" element={<SchemeOfWorkPage />} />
+              <Route path="curriculum" element={<CurriculumLibraryPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

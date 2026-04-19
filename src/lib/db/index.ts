@@ -1,11 +1,21 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { LessonPlan, Activity, Assessment, AppSettings, SchemeOfWork } from '../../types'
+import type {
+  LessonPlan,
+  Activity,
+  Assessment,
+  AppSettings,
+  SchemeOfWork,
+  Curriculum,
+  EducationLevel,
+  Subject,
+} from '../../types'
 
 const db = new Dexie('TeachersDigitalLiteracy') as Dexie & {
   lessonPlans: EntityTable<LessonPlan, 'id'>
   activities: EntityTable<Activity, 'id'>
   assessments: EntityTable<Assessment, 'id'>
   schemes: EntityTable<SchemeOfWork, 'id'>
+  curricula: EntityTable<Curriculum, 'id'>
   settings: EntityTable<AppSettings & { id: string }, 'id'>
 }
 
@@ -24,6 +34,10 @@ db.version(3).stores({
   lessonPlans: 'id, subject, level, createdAt, schemeId',
   activities: 'id, subject, level, createdAt, lessonId, schemeId',
   assessments: 'id, subject, level, createdAt, lessonId, schemeId',
+})
+
+db.version(4).stores({
+  curricula: 'id, country, level, subject, grade, createdAt, [country+level+subject+grade]',
 })
 
 export { db }
@@ -113,4 +127,32 @@ export async function deleteActivity(id: string) {
 
 export async function deleteAssessment(id: string) {
   await db.assessments.delete(id)
+}
+
+export async function saveCurriculum(curriculum: Curriculum) {
+  await db.curricula.put(curriculum)
+}
+
+export async function getCurricula() {
+  return db.curricula.orderBy('createdAt').reverse().toArray()
+}
+
+export async function getCurriculum(id: string) {
+  return db.curricula.get(id)
+}
+
+export async function deleteCurriculum(id: string) {
+  await db.curricula.delete(id)
+}
+
+export async function findCurriculum(filter: {
+  country: string
+  level: EducationLevel
+  subject: Subject
+  grade: string
+}) {
+  return db.curricula
+    .where('[country+level+subject+grade]')
+    .equals([filter.country, filter.level, filter.subject, filter.grade])
+    .first()
 }

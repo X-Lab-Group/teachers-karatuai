@@ -1,11 +1,12 @@
 import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { BookOpen, Lightbulb, ClipboardCheck, CalendarRange, Settings } from 'lucide-react'
+import { BookOpen, Lightbulb, ClipboardCheck, CalendarRange, Library, Settings } from 'lucide-react'
 
 const navItems = [
   { to: '/', icon: BookOpen, label: 'Lessons', color: 'teal' },
   { to: '/scheme', icon: CalendarRange, label: 'Scheme', color: 'indigo' },
+  { to: '/curriculum', icon: Library, label: 'Library', color: 'emerald' },
   { to: '/activities', icon: Lightbulb, label: 'Activities', color: 'amber' },
   { to: '/assessments', icon: ClipboardCheck, label: 'Tests', color: 'pink' },
   { to: '/settings', icon: Settings, label: 'Settings', color: 'blue' },
@@ -17,6 +18,7 @@ const colorClasses = {
   pink: 'text-pink-500 bg-pink-50',
   blue: 'text-blue-500 bg-blue-50',
   indigo: 'text-indigo-500 bg-indigo-50',
+  emerald: 'text-emerald-500 bg-emerald-50',
 }
 
 const TAP = { scale: 0.95 }

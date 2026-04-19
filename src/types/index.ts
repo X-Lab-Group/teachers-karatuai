@@ -91,6 +91,19 @@ export interface SchemeOfWork {
   createdAt: Date
 }
 
+export interface Curriculum {
+  id: string
+  country: string
+  level: EducationLevel
+  subject: Subject
+  grade: string
+  title: string
+  sourceFileName?: string
+  pasteText?: string
+  parsedText: string
+  createdAt: Date
+}
+
 export interface AppSettings {
   language: 'en' | 'fr' | 'sw' | 'ha' | 'yo' | 'ig' | 'ar' | 'rw'
   theme: 'light' | 'dark' | 'system'

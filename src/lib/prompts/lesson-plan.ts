@@ -46,12 +46,13 @@ export function buildLessonPlanPrompt(params: {
   duration: number
   additionalContext?: string
   localContext?: LocalContext
+  curriculumSection?: string
 }): string {
-  const { topic, subject, level, grade, duration, additionalContext, localContext } = params
+  const { topic, subject, level, grade, duration, additionalContext, localContext, curriculumSection } = params
   const localSection = buildLocalContextSection(localContext)
 
   return `You are an experienced African teacher helping create lesson plans. Create a detailed, practical lesson plan.
-${withSection(localSection)}
+${withSection(localSection)}${withSection(curriculumSection ?? '')}
 CONTEXT:
 - Subject: ${SUBJECT_NAMES[subject]}
 - Education Level: ${LEVEL_CONTEXT[level]}
@@ -164,12 +165,13 @@ export function buildSchemePrompt(params: {
   term: Term
   weekCount: number
   localContext?: LocalContext
+  curriculumSection?: string
 }): string {
-  const { subject, level, grade, term, weekCount, localContext } = params
+  const { subject, level, grade, term, weekCount, localContext, curriculumSection } = params
   const localSection = buildLocalContextSection(localContext)
 
   return `You are an experienced African curriculum planner. Build a ${weekCount}-week scheme of work for ${SUBJECT_NAMES[subject]}, ${grade} (${LEVEL_CONTEXT[level].split('.')[0]}), ${TERM_LABEL[term]}.
-${withSection(localSection)}
+${withSection(localSection)}${withSection(curriculumSection ?? '')}
 Produce a markdown table of contents, then for each week use this structure:
 
 ## Week {n}: {Topic}
