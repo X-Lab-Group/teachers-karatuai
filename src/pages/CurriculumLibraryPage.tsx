@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Library,
@@ -10,6 +11,7 @@ import {
   CheckCircle,
   AlertCircle,
   X,
+  CalendarRange,
 } from 'lucide-react'
 import { Button, Card, Input, Select, TextArea } from '../components/ui'
 import { extractPdfText } from '../lib/pdf-parse'
@@ -28,6 +30,7 @@ const MAX_PDF_BYTES = 20 * 1024 * 1024
 const PREVIEW_CHARS = 320
 
 export default function CurriculumLibraryPage() {
+  const navigate = useNavigate()
   const [showForm, setShowForm] = useState(false)
   const [isParsing, setIsParsing] = useState(false)
   const [parseError, setParseError] = useState<string | null>(null)
@@ -138,6 +141,18 @@ export default function CurriculumLibraryPage() {
     if (confirm(`Remove "${title}" from your library?`)) {
       await deleteCurriculum(id)
     }
+  }
+
+  const handleCreateScheme = (c: Curriculum) => {
+    navigate('/scheme', {
+      state: {
+        prefill: {
+          subject: c.subject,
+          level: c.level,
+          grade: c.grade,
+        },
+      },
+    })
   }
 
   if (showForm) {
@@ -373,6 +388,17 @@ export default function CurriculumLibraryPage() {
                   >
                     <Trash2 size={18} />
                   </motion.button>
+                </div>
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCreateScheme(c)}
+                    icon={<CalendarRange size={16} />}
+                    className="w-full"
+                  >
+                    Create Scheme of Work
+                  </Button>
                 </div>
               </Card>
             )

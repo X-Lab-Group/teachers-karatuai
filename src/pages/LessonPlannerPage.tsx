@@ -27,6 +27,7 @@ import {
   getActivitiesByLessonId,
   getAssessmentsByLessonId,
   getScheme,
+  getSchemes,
   getSettings,
   findCurriculum,
 } from '../lib/db'
@@ -112,6 +113,20 @@ export default function LessonPlannerPage() {
           })
         : undefined,
     [country, formData.subject, formData.level, formData.grade],
+  )
+  const matchingSchemes = useLiveQuery(
+    () =>
+      formData.subject && formData.level && formData.grade
+        ? getSchemes().then((all) =>
+            all.filter(
+              (s) =>
+                s.subject === formData.subject &&
+                s.level === formData.level &&
+                s.grade === formData.grade,
+            ),
+          )
+        : undefined,
+    [formData.subject, formData.level, formData.grade],
   )
   const [copied, setCopied] = useState(false)
 
@@ -338,6 +353,38 @@ export default function LessonPlannerPage() {
                   </div>
                 </div>
               )}
+
+              {!parentScheme &&
+                formData.subject &&
+                formData.level &&
+                formData.grade &&
+                matchingSchemes &&
+                matchingSchemes.length === 0 && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate('/scheme', {
+                        state: {
+                          prefill: {
+                            subject: formData.subject,
+                            level: formData.level,
+                            grade: formData.grade,
+                          },
+                        },
+                      })
+                    }
+                    className="flex items-start gap-3 w-full p-3 rounded-2xl bg-slate-50 hover:bg-indigo-50 text-slate-600 hover:text-indigo-700 transition-colors text-sm text-left"
+                  >
+                    <CalendarRange size={16} className="shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">No scheme of work yet</p>
+                      <p className="text-xs opacity-80">
+                        Plan the whole term first to keep weekly lessons in sync · Tap to open Scheme
+                      </p>
+                    </div>
+                    <Plus size={14} className="shrink-0 mt-1 opacity-60" />
+                  </button>
+                )}
 
               {error && (
                 <div className="p-4 bg-red-50 border border-red-200 rounded-2xl text-red-600 text-sm">

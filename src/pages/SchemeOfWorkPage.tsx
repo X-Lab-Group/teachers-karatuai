@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CalendarRange,
@@ -14,6 +14,7 @@ import {
   BookOpen,
   ArrowRight,
   FileText,
+  Library,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { Button, Card, Input, Select } from '../components/ui'
@@ -40,20 +41,36 @@ const TERMS: { value: Term; label: string }[] = [
   { value: 'third', label: 'Third Term' },
 ]
 
+interface SchemePrefill {
+  subject?: Subject
+  level?: EducationLevel
+  grade?: string
+}
+
+type SchemeNavState = { prefill?: SchemePrefill } | null
+
 export default function SchemeOfWorkPage() {
+  const location = useLocation()
   const navigate = useNavigate()
+  const navStateOnMount = useState<SchemeNavState>(
+    () => (location.state as SchemeNavState) ?? null,
+  )[0]
+
   const { generate, isReady } = useModel()
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(Boolean(navStateOnMount?.prefill))
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedContent, setGeneratedContent] = useState('')
   const [viewing, setViewing] = useState<SchemeOfWork | null>(null)
   const [showRawMarkdown, setShowRawMarkdown] = useState(false)
-  const [formData, setFormData] = useState({
-    subject: '' as Subject | '',
-    level: '' as EducationLevel | '',
-    grade: '',
-    term: 'first' as Term,
-    weekCount: '12',
+  const [formData, setFormData] = useState(() => {
+    const p = navStateOnMount?.prefill
+    return {
+      subject: (p?.subject ?? '') as Subject | '',
+      level: (p?.level ?? '') as EducationLevel | '',
+      grade: p?.grade ?? '',
+      term: 'first' as Term,
+      weekCount: '12',
+    }
   })
 
   const schemes = useLiveQuery(() => getSchemes(), [])
@@ -80,6 +97,12 @@ export default function SchemeOfWorkPage() {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (location.state) {
+      navigate(location.pathname, { replace: true, state: null })
+    }
+  }, [location.pathname, location.state, navigate])
 
   const handleCopy = async (content: string) => {
     try {
@@ -292,7 +315,7 @@ export default function SchemeOfWorkPage() {
                 helpText="Most African school terms run 10-13 weeks"
               />
 
-              {matchedCurriculum && (
+              {matchedCurriculum ? (
                 <div className="flex items-start gap-3 p-3 rounded-2xl bg-emerald-50 text-emerald-700 text-sm">
                   <FileText size={16} className="shrink-0 mt-0.5" />
                   <div className="min-w-0">
@@ -300,6 +323,26 @@ export default function SchemeOfWorkPage() {
                     <p className="text-emerald-600 text-xs truncate">{matchedCurriculum.title}</p>
                   </div>
                 </div>
+              ) : (
+                country &&
+                formData.subject &&
+                formData.level &&
+                formData.grade && (
+                  <button
+                    type="button"
+                    onClick={() => navigate('/curriculum')}
+                    className="flex items-start gap-3 w-full p-3 rounded-2xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 transition-colors text-sm text-left"
+                  >
+                    <Library size={16} className="shrink-0 mt-0.5" />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold">No curriculum loaded</p>
+                      <p className="text-xs opacity-80">
+                        Add the official syllabus first to ground the AI · Tap to open Curriculum
+                      </p>
+                    </div>
+                    <ArrowRight size={14} className="shrink-0 mt-1 opacity-60" />
+                  </button>
+                )
               )}
 
               <Button type="submit" className="w-full" size="lg" icon={<Sparkles size={20} />}>
