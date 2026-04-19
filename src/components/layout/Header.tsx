@@ -1,5 +1,6 @@
 import { memo } from 'react'
-import { Wifi, WifiOff, Cpu, Sparkles } from 'lucide-react'
+import { NavLink } from 'react-router-dom'
+import { Wifi, WifiOff, Cpu, Sparkles, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { useModelStatus } from '../../hooks/useModel'
@@ -71,11 +72,24 @@ function Header() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <ModelStatusBadge />
-            <OnlineStatusBadge />
-          </div>
+        <div className="flex items-center gap-2">
+          <ModelStatusBadge />
+          <OnlineStatusBadge />
+          <NavLink to="/settings" aria-label="Settings">
+            {({ isActive }) => (
+              <motion.div
+                whileHover={ICON_HOVER}
+                whileTap={{ scale: 0.95 }}
+                className={`p-2 rounded-full transition-colors ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-500'
+                    : 'bg-slate-100 text-slate-500 hover:bg-blue-50 hover:text-blue-500'
+                }`}
+              >
+                <Settings size={18} />
+              </motion.div>
+            )}
+          </NavLink>
         </div>
       </div>
     </motion.header>
