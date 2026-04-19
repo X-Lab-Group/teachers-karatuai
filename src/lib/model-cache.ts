@@ -14,6 +14,22 @@ async function evictLegacyCaches(): Promise<void> {
   )
 }
 
+async function ensurePersistentStorage(): Promise<void> {
+  if (!navigator.storage?.persist) return
+  try {
+    const already = await navigator.storage.persisted?.()
+    if (already) return
+    const granted = await navigator.storage.persist()
+    if (!granted) {
+      console.warn(
+        'Persistent storage was not granted — the cached model may be evicted between sessions.',
+      )
+    }
+  } catch (err) {
+    console.warn('Could not request persistent storage:', err)
+  }
+}
+
 function isValidSize(size: number): boolean {
   return size === EXPECTED_SIZE
 }
@@ -96,6 +112,7 @@ export async function getCachedModelUrl(
     return URL.createObjectURL(blob)
   }
 
+  await ensurePersistentStorage()
   await evictLegacyCaches()
   const cache = await caches.open(CACHE_NAME)
 
