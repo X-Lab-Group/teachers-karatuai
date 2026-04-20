@@ -9,11 +9,15 @@ interface BuildOpts {
   tokenBudget?: number
 }
 
+// The model's total context (input + output) is ~4096 tokens. Schemes and
+// lesson plans need ~1500-2500 tokens to *generate*, so the curriculum
+// excerpt is capped well under half the budget. Keyword slicing means the
+// teacher still gets the relevant slice even when the syllabus is huge.
 export function buildCurriculumContextSection({
   curriculum,
   topic,
   weekNumber,
-  tokenBudget = 2500,
+  tokenBudget = 700,
 }: BuildOpts): string {
   if (!curriculum?.parsedText) return ''
 

@@ -80,7 +80,7 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
           baseOptions: {
             modelAssetPath: modelUrl,
           },
-          maxTokens: 2048,
+          maxTokens: 4096,
           topK: 40,
           temperature: 0.7,
           randomSeed: Date.now(),
