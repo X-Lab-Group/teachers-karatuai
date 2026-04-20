@@ -4,11 +4,11 @@ import { motion } from 'framer-motion'
 import { BookOpen, Lightbulb, ClipboardCheck, CalendarRange, Library } from 'lucide-react'
 
 const navItems = [
-  { to: '/curriculum', icon: Library, label: 'Curriculum', color: 'emerald' },
-  { to: '/scheme', icon: CalendarRange, label: 'Scheme', color: 'indigo' },
-  { to: '/', icon: BookOpen, label: 'Lessons', color: 'teal' },
-  { to: '/activities', icon: Lightbulb, label: 'Activities', color: 'amber' },
-  { to: '/assessments', icon: ClipboardCheck, label: 'Tests', color: 'pink' },
+  { to: '/', icon: Library, label: 'Curriculum', color: 'emerald', end: true },
+  { to: '/scheme', icon: CalendarRange, label: 'Scheme', color: 'indigo', end: false },
+  { to: '/lesson', icon: BookOpen, label: 'Lessons', color: 'teal', end: false },
+  { to: '/activities', icon: Lightbulb, label: 'Activities', color: 'amber', end: false },
+  { to: '/assessments', icon: ClipboardCheck, label: 'Tests', color: 'pink', end: false },
 ] as const
 
 const colorClasses = {
@@ -28,10 +28,11 @@ function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-t border-slate-200 safe-area-pb">
       <div className="flex items-center justify-around max-w-lg mx-auto px-2 py-2">
-        {navItems.map(({ to, icon: Icon, label, color }) => (
+        {navItems.map(({ to, icon: Icon, label, color, end }) => (
           <NavLink
             key={to}
             to={to}
+            end={end}
             className="flex-1"
           >
             {({ isActive }) => (

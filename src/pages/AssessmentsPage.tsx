@@ -456,7 +456,7 @@ export default function AssessmentsPage() {
                   <button
                     type="button"
                     onClick={() =>
-                      navigate('/', { state: { openLessonId: assessment.lessonId } })
+                      navigate('/lesson', { state: { openLessonId: assessment.lessonId } })
                     }
                     className="text-xs font-medium text-teal-600 mt-2 inline-flex items-center gap-1 hover:underline"
                   >

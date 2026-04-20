@@ -461,7 +461,7 @@ export default function ActivitiesPage() {
                   <button
                     type="button"
                     onClick={() =>
-                      navigate('/', { state: { openLessonId: activity.lessonId } })
+                      navigate('/lesson', { state: { openLessonId: activity.lessonId } })
                     }
                     className="text-xs font-medium text-teal-600 mt-2 inline-flex items-center gap-1 hover:underline"
                   >

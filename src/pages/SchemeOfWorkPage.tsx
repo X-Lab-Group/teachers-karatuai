@@ -235,7 +235,7 @@ export default function SchemeOfWorkPage() {
         onCopy={handleCopy}
         onExportPDF={handleExportPDF}
         onCreateLessonForWeek={(week) => {
-          navigate('/', {
+          navigate('/lesson', {
             state: {
               prefill: {
                 topic: week.topic,
@@ -251,7 +251,7 @@ export default function SchemeOfWorkPage() {
           })
         }}
         onOpenLesson={(lessonId) => {
-          navigate('/', { state: { openLessonId: lessonId } })
+          navigate('/lesson', { state: { openLessonId: lessonId } })
         }}
       />
     )

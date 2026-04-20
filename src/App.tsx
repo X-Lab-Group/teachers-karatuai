@@ -38,11 +38,11 @@ export default function App() {
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Layout />}>
-              <Route index element={<LessonPlannerPage />} />
+              <Route index element={<CurriculumLibraryPage />} />
+              <Route path="lesson" element={<LessonPlannerPage />} />
               <Route path="activities" element={<ActivitiesPage />} />
               <Route path="assessments" element={<AssessmentsPage />} />
               <Route path="scheme" element={<SchemeOfWorkPage />} />
-              <Route path="curriculum" element={<CurriculumLibraryPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
           </Routes>

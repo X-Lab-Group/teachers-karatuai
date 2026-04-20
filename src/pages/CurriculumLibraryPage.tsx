@@ -203,7 +203,7 @@ export default function CurriculumLibraryPage() {
   }
 
   const handleCreateLesson = (c: Curriculum) => {
-    navigate('/', {
+    navigate('/lesson', {
       state: {
         prefill: {
           subject: c.subject,
