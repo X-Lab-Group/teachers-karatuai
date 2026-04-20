@@ -58,21 +58,21 @@ function Header() {
       animate={HEADER_ANIMATE}
       className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200"
     >
-      <div className="px-4 py-3 flex items-center justify-between max-w-3xl mx-auto">
-        <div className="flex items-center gap-3">
+      <div className="px-4 py-3 flex items-center justify-between gap-3 max-w-3xl mx-auto">
+        <div className="flex items-center gap-3 min-w-0">
           <motion.div
             whileHover={LOGO_HOVER}
-            className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg"
+            className="w-10 h-10 shrink-0 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg"
           >
             <Sparkles size={20} className="text-white" />
           </motion.div>
-          <div>
-            <h1 className="text-lg font-bold text-slate-800">KaratuAI</h1>
-            <p className="text-xs text-slate-500">Teacher's Companion</p>
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-slate-800 truncate">KaratuAI</h1>
+            <p className="hidden sm:block text-xs text-slate-500 truncate">Teacher's Companion</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <ModelStatusBadge />
           <OnlineStatusBadge />
           <NavLink to="/settings" aria-label="Settings">
