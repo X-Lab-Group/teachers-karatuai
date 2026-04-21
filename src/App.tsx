@@ -1,8 +1,5 @@
 import { lazy, Suspense, type ComponentType } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import ModelProvider from './contexts/ModelContext'
-import ModelLoadingScreen from './components/ModelLoadingScreen'
-import Layout from './components/layout/Layout'
 
 const RELOAD_FLAG = 'karatuai:chunk-reloaded'
 
@@ -23,6 +20,8 @@ function lazyWithReload<T extends ComponentType<unknown>>(
   })
 }
 
+const LandingPage = lazyWithReload(() => import('./pages/LandingPage'))
+const AppShell = lazyWithReload(() => import('./components/AppShell'))
 const LessonPlannerPage = lazyWithReload(() => import('./pages/LessonPlannerPage'))
 const ActivitiesPage = lazyWithReload(() => import('./pages/ActivitiesPage'))
 const AssessmentsPage = lazyWithReload(() => import('./pages/AssessmentsPage'))
@@ -32,22 +31,20 @@ const SettingsPage = lazyWithReload(() => import('./pages/SettingsPage'))
 
 export default function App() {
   return (
-    <ModelProvider>
-      <ModelLoadingScreen />
-      <BrowserRouter>
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route index element={<CurriculumLibraryPage />} />
-              <Route path="lesson" element={<LessonPlannerPage />} />
-              <Route path="activities" element={<ActivitiesPage />} />
-              <Route path="assessments" element={<AssessmentsPage />} />
-              <Route path="scheme" element={<SchemeOfWorkPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </ModelProvider>
+    <BrowserRouter>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route element={<AppShell />}>
+            <Route path="curriculum" element={<CurriculumLibraryPage />} />
+            <Route path="lesson" element={<LessonPlannerPage />} />
+            <Route path="activities" element={<ActivitiesPage />} />
+            <Route path="assessments" element={<AssessmentsPage />} />
+            <Route path="scheme" element={<SchemeOfWorkPage />} />
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
   )
 }
