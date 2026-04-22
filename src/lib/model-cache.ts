@@ -15,7 +15,10 @@ const EXPECTED_SIZE = 2_003_697_664
 // duplicated in public/sw.js — keep them in sync if any of these change.
 const CHUNK_SIZE = 50 * 1024 * 1024
 const TOTAL_CHUNKS = Math.ceil(EXPECTED_SIZE / CHUNK_SIZE)
-const CHUNK_TIMEOUT_MS = 120_000
+// 10 minutes per chunk. A 50 MB chunk on a 1 Mbps connection (typical for
+// rural African internet) takes ~7 minutes, so 2 minutes was aborting good
+// downloads mid-stream. The Wake Lock keeps the page alive while this runs.
+const CHUNK_TIMEOUT_MS = 600_000
 const CHUNK_MAX_ATTEMPTS = 4
 
 async function evictLegacyCaches(): Promise<void> {
@@ -81,7 +84,6 @@ async function downloadChunk(
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), CHUNK_TIMEOUT_MS)
 
-  let received = 0
   try {
     const response = await fetch(MODEL_URL, {
       headers: { Range: `bytes=${start}-${end}` },
@@ -98,29 +100,43 @@ async function downloadChunk(
       throw new Error(`Chunk ${index} response had no body`)
     }
 
-    const tracker = new TransformStream<Uint8Array, Uint8Array>({
-      transform(chunk, c) {
-        received += chunk.byteLength
-        onChunkBytes?.(received)
-        c.enqueue(chunk)
-      },
-    })
+    // Drain the network stream into JS memory before handing it to cache.put.
+    // Streaming straight into Cache.put() means any mid-flight network blip
+    // surfaces as an opaque "Cache.put() encountered a network error" that the
+    // retry loop cannot diagnose, and can leave a partially-written entry that
+    // lies about its Content-Length. Fully buffering one chunk costs ~50 MB of
+    // peak heap (fine on every device that can run this app) and turns network
+    // failures into clean "truncated" errors that retry cleanly.
+    const reader = response.body.getReader()
+    const parts: Uint8Array[] = []
+    let received = 0
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      parts.push(value)
+      received += value.byteLength
+      onChunkBytes?.(received)
+    }
 
-    const trackedBody = response.body.pipeThrough(tracker)
+    if (received !== expected) {
+      throw new Error(`Chunk ${index} truncated: ${received}/${expected}`)
+    }
+
+    const buffer = new Uint8Array(received)
+    let offset = 0
+    for (const part of parts) {
+      buffer.set(part, offset)
+      offset += part.byteLength
+    }
 
     const cacheHeaders = new Headers()
     cacheHeaders.set('Content-Type', 'application/octet-stream')
-    cacheHeaders.set('Content-Length', String(expected))
+    cacheHeaders.set('Content-Length', String(received))
 
     await cache.put(
       chunkUrl(index),
-      new Response(trackedBody, { status: 200, statusText: 'OK', headers: cacheHeaders }),
+      new Response(buffer, { status: 200, statusText: 'OK', headers: cacheHeaders }),
     )
-
-    if (received !== expected) {
-      await cache.delete(chunkUrl(index)).catch(() => undefined)
-      throw new Error(`Chunk ${index} truncated: ${received}/${expected}`)
-    }
   } finally {
     clearTimeout(timer)
   }
