@@ -28,6 +28,64 @@ async function evictLegacyCaches(): Promise<void> {
   )
 }
 
+// Thrown when the browser's storage budget cannot fit the remaining model
+// bytes. Two trigger sites: (1) the pre-flight estimate() check, where we know
+// real numbers and can quote them; (2) a cache.put() rejection mid-download,
+// where navigator.storage.estimate() routinely lies (iOS/Android browsers cap
+// reported quota at round numbers that exceed actual writable disk), so we
+// don't quote numbers we can't trust.
+export class StorageQuotaError extends Error {
+  readonly availableBytes: number | null
+  readonly requiredBytes: number
+  constructor(
+    requiredBytes: number,
+    availableBytes: number | null,
+    detected: 'preflight' | 'write',
+  ) {
+    const reqMb = Math.round(requiredBytes / (1024 * 1024))
+    const message =
+      detected === 'preflight' && availableBytes !== null
+        ? `Not enough free space on this device. The AI needs about ${reqMb} MB but only ${Math.round(availableBytes / (1024 * 1024))} MB is available. Free up storage in your phone settings and try again.`
+        : `Your device ran out of space while saving the AI (it needs about ${reqMb} MB). Free up storage in your phone settings, then try again — the parts already downloaded will be reused.`
+    super(message)
+    this.name = 'StorageQuotaError'
+    this.availableBytes = availableBytes
+    this.requiredBytes = requiredBytes
+  }
+}
+
+function isQuotaExceeded(err: unknown): boolean {
+  if (!(err instanceof Error)) return false
+  // DOMException for cache.put can come through as either name (older WebKit
+  // uses QuotaExceededError, Chromium also exposes it; some surfaces use code 22).
+  return (
+    err.name === 'QuotaExceededError' ||
+    err.message.toLowerCase().includes('quota')
+  )
+}
+
+// Headroom on top of the remaining download. The browser's reported quota
+// rarely matches actual writable space — a 50 MB cushion absorbs the variance
+// without being so large that we reject phones that *could* finish the download.
+const STORAGE_HEADROOM_BYTES = 50 * 1024 * 1024
+
+async function assertEnoughStorage(remainingBytes: number): Promise<void> {
+  if (!navigator.storage?.estimate) return
+  try {
+    const { quota, usage } = await navigator.storage.estimate()
+    if (typeof quota !== 'number' || typeof usage !== 'number') return
+    const available = quota - usage
+    const required = remainingBytes + STORAGE_HEADROOM_BYTES
+    if (available < required) {
+      throw new StorageQuotaError(required, available, 'preflight')
+    }
+  } catch (err) {
+    if (err instanceof StorageQuotaError) throw err
+    // estimate() failures shouldn't block the download — let the actual write
+    // surface the quota error instead.
+  }
+}
+
 async function ensurePersistentStorage(): Promise<void> {
   if (!navigator.storage?.persist) return
   try {
@@ -133,10 +191,20 @@ async function downloadChunk(
     cacheHeaders.set('Content-Type', 'application/octet-stream')
     cacheHeaders.set('Content-Length', String(received))
 
-    await cache.put(
-      chunkUrl(index),
-      new Response(buffer, { status: 200, statusText: 'OK', headers: cacheHeaders }),
-    )
+    try {
+      await cache.put(
+        chunkUrl(index),
+        new Response(buffer, { status: 200, statusText: 'OK', headers: cacheHeaders }),
+      )
+    } catch (err) {
+      // estimate() typically over-reports here (browsers on phones cap quota
+      // at optimistic round numbers), so we don't quote a "free" figure that
+      // would contradict the failure the user just hit.
+      if (isQuotaExceeded(err)) {
+        throw new StorageQuotaError(EXPECTED_SIZE, null, 'write')
+      }
+      throw err
+    }
   } finally {
     clearTimeout(timer)
   }
@@ -154,6 +222,9 @@ async function downloadChunkWithRetry(
       return
     } catch (err) {
       lastErr = err
+      // Quota exhaustion will not clear by waiting — the user has to free space.
+      // Bail immediately so the UI surfaces the actionable error.
+      if (err instanceof StorageQuotaError) throw err
       if (attempt === CHUNK_MAX_ATTEMPTS - 1) break
       // Exponential backoff: 1s, 2s, 4s. Network blip or server hiccup usually
       // clears within seconds; longer waits frustrate users on the loading screen.
@@ -214,6 +285,11 @@ async function downloadAllChunks(
   for (let i = 0; i < TOTAL_CHUNKS; i++) {
     if (await isChunkComplete(cache, i)) completedBytes += expectedChunkSize(i)
   }
+
+  // Reject up front if the device clearly can't fit what's left. Discovering
+  // this 1.5 GB into a 1.87 GB download wastes bandwidth on metered phones and
+  // surfaces as a confusing "Quota exceeded" deep in the chunk loop.
+  await assertEnoughStorage(EXPECTED_SIZE - completedBytes)
 
   const reportProgress = (inFlightBytes = 0) => {
     const total = completedBytes + inFlightBytes

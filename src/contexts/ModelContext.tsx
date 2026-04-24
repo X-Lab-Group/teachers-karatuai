@@ -7,7 +7,12 @@ import {
   type ModelStatusValue,
   type ModelActionsValue,
 } from './model-context'
-import { getCachedModelUrl, isModelCached, clearModelCache } from '../lib/model-cache'
+import {
+  getCachedModelUrl,
+  isModelCached,
+  clearModelCache,
+  StorageQuotaError,
+} from '../lib/model-cache'
 import { isIOS } from '../lib/device'
 
 const INIT_TIMEOUT_MS = 120_000
@@ -104,11 +109,14 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
       setProgress(100)
     } catch (err) {
       console.error('Model initialization error:', err)
-      if (loadedFromCache) {
+      // Storage exhaustion: leave any partial chunks in cache so the next
+      // attempt resumes after the user frees space, rather than starting over.
+      const isQuotaError = err instanceof StorageQuotaError
+      if (loadedFromCache && !isQuotaError) {
         await clearModelCache().catch(() => undefined)
       }
       const baseMsg = err instanceof Error ? err.message : 'Failed to load AI model'
-      const suffix = loadedFromCache
+      const suffix = loadedFromCache && !isQuotaError
         ? ' Cached model was cleared — try again to re-download.'
         : ''
       setError(baseMsg + suffix)
