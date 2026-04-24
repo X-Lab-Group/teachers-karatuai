@@ -95,8 +95,8 @@ For Android builds:
 ### Install and run
 
 ```bash
-git clone https://github.com/JatoJay/teachers-digital-literacy.git
-cd teachers-digital-literacy
+git clone https://github.com/X-Lab-Group/teachers-karatuai.git
+cd teachers-karatuai
 npm install
 npm run dev
 ```
@@ -292,7 +292,7 @@ KaratuAI is released under the [MIT License](./LICENSE). You can use, modify, an
 
 - **Email:** [info@karatuai.com](mailto:info@karatuai.com)
 - **Sponsorship & partnerships:** [info@karatuai.com](mailto:info@karatuai.com?subject=KaratuAI%20sponsorship%20enquiry)
-- **Issues & feature requests:** [GitHub Issues](https://github.com/JatoJay/teachers-digital-literacy/issues)
+- **Issues & feature requests:** [GitHub Issues](https://github.com/X-Lab-Group/teachers-karatuai/issues)
 
 ---
 

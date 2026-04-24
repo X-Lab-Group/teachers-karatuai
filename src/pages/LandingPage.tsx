@@ -52,7 +52,7 @@ const ANDROID_APK_URL =
   'https://storage.googleapis.com/karatuai-models/apks/karatuai-android-v1.0.0.apk'
 const ANDROID_APK_VERSION = '1.0.0'
 const ANDROID_APK_SIZE = '4.8 MB'
-const GITHUB_URL = 'https://github.com/JatoJay/teachers-digital-literacy'
+const GITHUB_URL = 'https://github.com/X-Lab-Group/teachers-karatuai'
 const CONTACT_EMAIL = 'info@karatuai.com'
 
 const fadeIn = {
