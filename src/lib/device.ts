@@ -25,3 +25,13 @@ export function detectDevice(): DeviceKind {
   if (isAndroid()) return 'android'
   return 'desktop'
 }
+
+// True when the bundle is running inside the Capacitor native shell (the
+// installed APK / future iOS app). Capacitor injects window.Capacitor at
+// runtime; checking for it avoids pulling @capacitor/core into the web
+// bundle just to read this flag.
+export function isNativeApp(): boolean {
+  if (typeof window === 'undefined') return false
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor
+  return typeof cap?.isNativePlatform === 'function' && cap.isNativePlatform()
+}

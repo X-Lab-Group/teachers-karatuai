@@ -1,5 +1,6 @@
 import { lazy, Suspense, type ComponentType } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { isNativeApp } from './lib/device'
 
 const RELOAD_FLAG = 'karatuai:chunk-reloaded'
 
@@ -34,7 +35,10 @@ export default function App() {
     <BrowserRouter>
       <Suspense fallback={null}>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route
+            path="/"
+            element={isNativeApp() ? <Navigate to="/curriculum" replace /> : <LandingPage />}
+          />
           <Route element={<AppShell />}>
             <Route path="curriculum" element={<CurriculumLibraryPage />} />
             <Route path="lesson" element={<LessonPlannerPage />} />
