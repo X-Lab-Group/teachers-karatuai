@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-teal.svg)](./LICENSE)
 [![Platform: Web](https://img.shields.io/badge/web-PWA-0d9488)](https://teachers.karatuai.com)
-[![Platform: Android](https://img.shields.io/badge/android-APK-10b981)](https://storage.googleapis.com/karatuai-models/apks/karatuai-android-v1.1.0.apk)
+[![Platform: Android](https://img.shields.io/badge/android-APK-10b981)](https://storage.googleapis.com/karatuai-models/apks/karatuai-android-v1.2.0.apk)
 [![Powered by Gemma](https://img.shields.io/badge/AI-Gemma%20on--device-4f46e5)](https://ai.google.dev/gemma)
 
 KaratuAI helps African teachers generate **schemes of work, lesson plans, classroom activities, and assessments** — entirely offline, on whatever device they already own. The AI runs locally in the browser via WebAssembly, so nothing teachers type ever leaves their device.
@@ -191,7 +191,7 @@ To open the project in Android Studio instead:
 npm run cap:open:android
 ```
 
-The current published APK is `karatuai-android-v1.1.0.apk` (~3.9 MB, signed release build), uploaded to `gs://karatuai-models/apks/`. iOS is not yet shipped because on-device AI does not fit in iPhone WebKit's per-tab memory budget — a native iOS app is on the roadmap.
+The current published APK is `karatuai-android-v1.2.0.apk` (~3.9 MB, signed release build), uploaded to `gs://karatuai-models/apks/`. iOS is not yet shipped because on-device AI does not fit in iPhone WebKit's per-tab memory budget — a native iOS app is on the roadmap.
 
 ---
 
