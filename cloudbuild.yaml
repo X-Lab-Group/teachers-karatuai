@@ -1,6 +1,12 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/karatuai-teachers-companion', '.']
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/karatuai-teachers-companion'
+      - '--build-arg'
+      - 'VITE_CLASSROOM_FORM_ENDPOINT=${_VITE_CLASSROOM_FORM_ENDPOINT}'
+      - '.'
 
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/karatuai-teachers-companion']
@@ -27,3 +33,6 @@ steps:
 
 images:
   - 'gcr.io/$PROJECT_ID/karatuai-teachers-companion'
+
+substitutions:
+  _VITE_CLASSROOM_FORM_ENDPOINT: ''

@@ -3,6 +3,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# Build-time env vars consumed by Vite. Empty defaults are intentional so a
+# fresh clone (no .env, no build-arg) still produces a working bundle —
+# features that depend on these gracefully degrade when the value is empty.
+ARG VITE_CLASSROOM_FORM_ENDPOINT=""
+ENV VITE_CLASSROOM_FORM_ENDPOINT=${VITE_CLASSROOM_FORM_ENDPOINT}
 RUN npm run build
 
 FROM nginx:alpine

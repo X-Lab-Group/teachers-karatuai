@@ -29,6 +29,8 @@ import {
   Building2,
 } from 'lucide-react'
 import { detectDevice, type DeviceKind } from '../lib/device'
+import ShareClassroomCard from '../components/ShareClassroomCard'
+import { hasInteractedWithClassroomForm } from '../lib/share-classroom'
 
 // Lucide v1 dropped brand icons, but the GitHub mark is recognizable enough
 // that an inline SVG carries more meaning here than a generic git-branch glyph.
@@ -979,6 +981,10 @@ function scrollToDownload() {
 export default function LandingPage() {
   const device = useMemo(() => detectDevice(), [])
   const [stepsRevealed, setStepsRevealed] = useState(false)
+  // Read localStorage once at mount time. Doing this in an effect would cause
+  // a cascading render and the classroom form would briefly flash for users
+  // who already filled it in.
+  const [showClassroomForm] = useState(() => !hasInteractedWithClassroomForm())
 
   useEffect(() => {
     document.documentElement.style.scrollBehavior = 'smooth'
@@ -997,6 +1003,7 @@ export default function LandingPage() {
         <HowItWorks />
         <OpenSourceSection />
         <SponsorshipSection />
+        {showClassroomForm && <ShareClassroomCard variant="inline" />}
         <DownloadSection
           device={device}
           stepsRevealed={stepsRevealed}
