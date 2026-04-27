@@ -49,9 +49,9 @@ function GithubIcon({ size = 16, className }: { size?: number; className?: strin
 }
 
 const ANDROID_APK_URL =
-  'https://storage.googleapis.com/karatuai-models/apks/karatuai-android-v1.0.0.apk'
-const ANDROID_APK_VERSION = '1.0.0'
-const ANDROID_APK_SIZE = '4.8 MB'
+  'https://storage.googleapis.com/karatuai-models/apks/karatuai-android-v1.1.0.apk'
+const ANDROID_APK_VERSION = '1.1.0'
+const ANDROID_APK_SIZE = '3.9 MB'
 const GITHUB_URL = 'https://github.com/X-Lab-Group/teachers-karatuai'
 const CONTACT_EMAIL = 'info@karatuai.com'
 
