@@ -25,13 +25,14 @@ echo "Making bucket publicly readable..."
 gsutil iam ch allUsers:objectViewer gs://$BUCKET_NAME
 
 echo "Submitting Cloud Build..."
-# Forward the classroom-form endpoint into the Cloud Build substitution so
-# the Vite bundle is rebuilt with VITE_CLASSROOM_FORM_ENDPOINT baked in.
-# Set the variable in your shell (or a .env you source) before running this
-# script — leaving it unset is fine, it just disables the form submission.
+# Forward the form endpoints into the Cloud Build substitution so the Vite
+# bundle is rebuilt with VITE_CLASSROOM_FORM_ENDPOINT and
+# VITE_SUPPORT_FORM_ENDPOINT baked in. Set them in your shell (or a .env you
+# source) before running this script — leaving them unset is fine, it just
+# disables the corresponding form submission.
 gcloud builds submit \
   --config=cloudbuild.yaml \
-  --substitutions=_VITE_CLASSROOM_FORM_ENDPOINT="${VITE_CLASSROOM_FORM_ENDPOINT:-}"
+  --substitutions=_VITE_CLASSROOM_FORM_ENDPOINT="${VITE_CLASSROOM_FORM_ENDPOINT:-}",_VITE_SUPPORT_FORM_ENDPOINT="${VITE_SUPPORT_FORM_ENDPOINT:-}"
 
 echo ""
 echo "=== DEPLOYMENT COMPLETE ==="

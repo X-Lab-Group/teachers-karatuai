@@ -8,6 +8,8 @@ COPY . .
 # features that depend on these gracefully degrade when the value is empty.
 ARG VITE_CLASSROOM_FORM_ENDPOINT=""
 ENV VITE_CLASSROOM_FORM_ENDPOINT=${VITE_CLASSROOM_FORM_ENDPOINT}
+ARG VITE_SUPPORT_FORM_ENDPOINT=""
+ENV VITE_SUPPORT_FORM_ENDPOINT=${VITE_SUPPORT_FORM_ENDPOINT}
 RUN npm run build
 
 FROM nginx:alpine

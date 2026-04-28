@@ -6,6 +6,8 @@ steps:
       - 'gcr.io/$PROJECT_ID/karatuai-teachers-companion'
       - '--build-arg'
       - 'VITE_CLASSROOM_FORM_ENDPOINT=${_VITE_CLASSROOM_FORM_ENDPOINT}'
+      - '--build-arg'
+      - 'VITE_SUPPORT_FORM_ENDPOINT=${_VITE_SUPPORT_FORM_ENDPOINT}'
       - '.'
 
   - name: 'gcr.io/cloud-builders/docker'
@@ -36,3 +38,4 @@ images:
 
 substitutions:
   _VITE_CLASSROOM_FORM_ENDPOINT: ''
+  _VITE_SUPPORT_FORM_ENDPOINT: ''

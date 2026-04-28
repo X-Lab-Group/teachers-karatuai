@@ -27,7 +27,7 @@ const SUBJECT_OPTIONS = [
   'Arabic',
 ] as const
 
-const APP_VERSION = '1.2.0'
+const APP_VERSION = '1.2.1'
 
 type Variant = 'inline' | 'modal'
 

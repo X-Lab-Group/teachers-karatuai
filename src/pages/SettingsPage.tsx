@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Settings, Download, CheckCircle, AlertCircle, Globe, Palette, GraduationCap, MapPin } from 'lucide-react'
+import { Settings, Download, CheckCircle, AlertCircle, Globe, Palette, GraduationCap, MapPin, LifeBuoy } from 'lucide-react'
 import { Button, Card, Input, Select } from '../components/ui'
 import { useModel } from '../hooks/useModel'
 import { getSettings, saveSettings } from '../lib/db'
 import { COUNTRY_PRESETS, getCountryPreset } from '../lib/local-context'
 import type { AppSettings, EducationLevel } from '../types'
+import SupportForm from '../components/SupportForm'
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
@@ -34,6 +35,7 @@ const COUNTRY_OPTIONS = COUNTRY_PRESETS.map((c) => ({ value: c.code, label: c.na
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null)
+  const [supportOpen, setSupportOpen] = useState(false)
   const { isReady, status, progress, error, retry } = useModel()
   const isDownloading = status === 'downloading'
 
@@ -277,7 +279,29 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card title="About KaratuAI" delay={3}>
+      <Card title="Get help" subtitle="Report a bug or ask the team a question" delay={3}>
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center flex-shrink-0">
+            <LifeBuoy size={20} />
+          </div>
+          <div className="flex-1 space-y-3">
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Something not working, or there's a feature you wish KaratuAI had? Send us a note and a real human will reply.
+            </p>
+            <Button
+              onClick={() => setSupportOpen(true)}
+              variant="outline"
+              icon={<LifeBuoy size={18} />}
+            >
+              Contact support
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      <SupportForm open={supportOpen} onClose={() => setSupportOpen(false)} />
+
+      <Card title="About KaratuAI" delay={4}>
         <div className="text-slate-500 space-y-3 text-sm leading-relaxed">
           <p className="text-slate-700 font-medium">Version 1.0.0</p>
           <p>

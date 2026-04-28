@@ -1,0 +1,14 @@
+{
+  "name": "karatuai-support",
+  "version": "1.0.0",
+  "description": "GCP Cloud Function (gen 2) that proxies in-app support requests to Resend.",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "resend": "^4.0.0"
+  }
+}
