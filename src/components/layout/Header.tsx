@@ -1,9 +1,10 @@
 import { memo } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Wifi, WifiOff, Cpu, Sparkles, Settings } from 'lucide-react'
+import { Wifi, WifiOff, Cpu, Settings } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useOnlineStatus } from '../../hooks/useOnlineStatus'
 import { useModelStatus } from '../../hooks/useModel'
+import Logo from '../Logo'
 
 const HEADER_INITIAL = { opacity: 0, y: -20 }
 const HEADER_ANIMATE = { opacity: 1, y: 0 }
@@ -62,9 +63,9 @@ function Header() {
         <div className="flex items-center gap-3 min-w-0">
           <motion.div
             whileHover={LOGO_HOVER}
-            className="w-10 h-10 shrink-0 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-lg"
+            className="w-10 h-10 shrink-0 flex items-center justify-center"
           >
-            <Sparkles size={20} className="text-white" />
+            <Logo size={40} />
           </motion.div>
           <div className="min-w-0">
             <h1 className="text-lg font-bold text-slate-800 truncate">KaratuAI</h1>

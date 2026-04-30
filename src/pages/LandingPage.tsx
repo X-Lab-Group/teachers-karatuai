@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { QRCodeSVG } from 'qrcode.react'
 import {
-  Sparkles,
   Globe,
   Smartphone,
   Download,
@@ -29,6 +28,7 @@ import {
   Building2,
 } from 'lucide-react'
 import { detectDevice, type DeviceKind } from '../lib/device'
+import Logo from '../components/Logo'
 import ShareClassroomCard from '../components/ShareClassroomCard'
 import { hasInteractedWithClassroomForm } from '../lib/share-classroom'
 
@@ -51,8 +51,8 @@ function GithubIcon({ size = 16, className }: { size?: number; className?: strin
 }
 
 const ANDROID_APK_URL =
-  'https://storage.googleapis.com/karatuai-models/apks/karatuai-android-v1.2.1.apk'
-const ANDROID_APK_VERSION = '1.2.1'
+  'https://storage.googleapis.com/karatuai-models/apks/karatuai-android-v1.2.2.apk'
+const ANDROID_APK_VERSION = '1.2.2'
 const ANDROID_APK_SIZE = '3.9 MB'
 const GITHUB_URL = 'https://github.com/X-Lab-Group/teachers-karatuai'
 const CONTACT_EMAIL = 'info@karatuai.com'
@@ -86,9 +86,7 @@ function TopNav() {
       />
       <div className="relative max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm shadow-teal-500/40">
-            <Sparkles size={16} className="text-white" />
-          </div>
+          <Logo size={32} />
           <span className="font-bold text-slate-900 tracking-tight">KaratuAI</span>
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
@@ -851,9 +849,7 @@ function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
           <div className="col-span-2">
             <Link to="/" className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-sm shadow-teal-500/40">
-                <Sparkles size={16} className="text-white" />
-              </div>
+              <Logo size={32} />
               <span className="font-bold text-slate-900 tracking-tight">KaratuAI</span>
             </Link>
             <p className="text-sm text-slate-600 max-w-sm leading-relaxed">
