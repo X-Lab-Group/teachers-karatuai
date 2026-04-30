@@ -3,7 +3,7 @@ import { marked } from 'marked'
 export type DocumentType = 'lesson' | 'activity' | 'assessment' | 'scheme'
 
 const ACCENTS: Record<DocumentType, { color: string; subtle: string; label: string }> = {
-  lesson: { color: '#0d9488', subtle: '#ccfbf1', label: 'Lesson Plan' },
+  lesson: { color: '#097064', subtle: '#d0f0e9', label: 'Lesson Plan' },
   activity: { color: '#d97706', subtle: '#fef3c7', label: 'Activity' },
   assessment: { color: '#db2777', subtle: '#fce7f3', label: 'Assessment' },
   scheme: { color: '#6366f1', subtle: '#e0e7ff', label: 'Scheme of Work' },
