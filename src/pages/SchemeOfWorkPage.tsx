@@ -62,6 +62,7 @@ export default function SchemeOfWorkPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedContent, setGeneratedContent] = useState('')
   const [viewing, setViewing] = useState<SchemeOfWork | null>(null)
+  const [savedScheme, setSavedScheme] = useState<SchemeOfWork | null>(null)
   const [showRawMarkdown, setShowRawMarkdown] = useState(false)
   const [formData, setFormData] = useState(() => {
     const p = navStateOnMount?.prefill
@@ -194,6 +195,7 @@ export default function SchemeOfWorkPage() {
       }
 
       await saveScheme(scheme)
+      setSavedScheme(scheme)
     } catch (err) {
       console.error(err)
     } finally {
@@ -211,6 +213,7 @@ export default function SchemeOfWorkPage() {
     setShowForm(true)
     setGeneratedContent('')
     setViewing(null)
+    setSavedScheme(null)
     setParentCurriculumId(null)
     setFormData({
       subject: '',
@@ -422,10 +425,24 @@ export default function SchemeOfWorkPage() {
                         Export PDF
                       </Button>
                     </div>
-                    <div className="mt-4">
-                      <Button onClick={handleReset} className="w-full" icon={<Plus size={20} />}>
-                        Create Another Scheme
+                    <div className="mt-4 flex gap-3">
+                      <Button
+                        variant="outline"
+                        onClick={handleReset}
+                        icon={<Plus size={20} />}
+                        className="flex-1"
+                      >
+                        Create Another
                       </Button>
+                      {savedScheme && (
+                        <Button
+                          onClick={() => setViewing(savedScheme)}
+                          icon={<BookOpen size={20} />}
+                          className="flex-1"
+                        >
+                          Spawn Lessons
+                        </Button>
+                      )}
                     </div>
                   </>
                 )}

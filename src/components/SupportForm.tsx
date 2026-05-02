@@ -8,7 +8,7 @@ import {
   submitSupportRequest,
 } from '../lib/support'
 
-const APP_VERSION = '1.2.3'
+const APP_VERSION = '1.2.4'
 const SUPPORT_EMAIL = 'support@karatuai.com'
 
 interface SupportFormProps {
