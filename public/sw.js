@@ -1,8 +1,15 @@
-const STATIC_CACHE = 'karatuai-static-v5'
+const STATIC_CACHE = 'karatuai-static-v6'
 const MODEL_CACHE = 'karatuai-model-cache-v5'
 const MODEL_HOST = 'models.karatuai.com'
 const MODEL_PATH = '/gemma-4-E2B-it-web.task'
-const PRECACHE = ['/', '/manifest.json', '/favicon.svg']
+const PRECACHE = [
+  '/',
+  '/manifest.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon-180.png',
+  '/icons/favicon-32.png',
+]
 
 // Mirror of the constants in src/lib/model-cache.ts. The page writes the model
 // to the cache as separate 50 MB entries keyed by `?chunk=N`, and this SW
@@ -20,6 +27,7 @@ const LEGACY_CACHES = [
   'karatuai-static-v2',
   'karatuai-static-v3',
   'karatuai-static-v4',
+  'karatuai-static-v5',
   'karatuai-model-cache-v1',
   'karatuai-model-cache-v2',
   'karatuai-model-cache-v3',
