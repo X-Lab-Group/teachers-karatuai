@@ -72,7 +72,6 @@ function chunkKey(index) {
 
 function shouldHandle(request) {
   if (request.method !== 'GET') return false
-  if (request.headers.has('range')) return false
   let url
   try {
     url = new URL(request.url)
@@ -82,8 +81,59 @@ function shouldHandle(request) {
   // The AI model URL gets a dedicated path because it lives on a separate host
   // and is populated by the page's streaming download — not by the SW itself.
   if (isModelRequest(url)) return true
+  if (request.headers.has('range')) return false
   if (url.origin !== self.location.origin) return false
   return true
+}
+
+function getRangeBounds(request) {
+  const range = request.headers.get('range')
+  if (!range) return null
+  const match = range.match(/^bytes=(\d*)-(\d*)$/)
+  if (!match) return { invalid: true }
+
+  const [, startText, endText] = match
+  if (!startText && !endText) return { invalid: true }
+
+  let start
+  let end
+  if (!startText) {
+    const suffixLength = Number(endText)
+    if (!Number.isSafeInteger(suffixLength) || suffixLength <= 0) {
+      return { invalid: true }
+    }
+    start = Math.max(MODEL_TOTAL_SIZE - suffixLength, 0)
+    end = MODEL_TOTAL_SIZE - 1
+  } else {
+    start = Number(startText)
+    end = endText ? Number(endText) : MODEL_TOTAL_SIZE - 1
+  }
+
+  if (
+    !Number.isSafeInteger(start) ||
+    !Number.isSafeInteger(end) ||
+    start < 0 ||
+    end < start ||
+    start >= MODEL_TOTAL_SIZE
+  ) {
+    return { invalid: true }
+  }
+
+  return {
+    start,
+    end: Math.min(end, MODEL_TOTAL_SIZE - 1),
+  }
+}
+
+function modelHeaders(contentLength) {
+  const headers = new Headers()
+  headers.set('Content-Type', 'application/octet-stream')
+  headers.set('Content-Length', String(contentLength))
+  headers.set('Accept-Ranges', 'bytes')
+  headers.set('Access-Control-Allow-Origin', '*')
+  headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
+  headers.set('Cache-Control', 'no-store')
+  return headers
 }
 
 // Stitches the 39 cached chunk entries into a single streaming body. We pull
@@ -131,13 +181,84 @@ async function buildAssembledModelResponse() {
     },
   })
 
-  const headers = new Headers()
-  headers.set('Content-Type', 'application/octet-stream')
-  headers.set('Content-Length', String(MODEL_TOTAL_SIZE))
-  headers.set('Access-Control-Allow-Origin', '*')
-  headers.set('Cross-Origin-Resource-Policy', 'cross-origin')
-  headers.set('Cache-Control', 'no-store')
+  const headers = modelHeaders(MODEL_TOTAL_SIZE)
   return new Response(stream, { status: 200, statusText: 'OK', headers })
+}
+
+async function buildModelRangeResponse(request) {
+  const bounds = getRangeBounds(request)
+  if (!bounds) return buildAssembledModelResponse()
+
+  const unsatisfiableHeaders = modelHeaders(0)
+  unsatisfiableHeaders.set('Content-Range', `bytes */${MODEL_TOTAL_SIZE}`)
+  if (bounds.invalid) {
+    return new Response(null, {
+      status: 416,
+      statusText: 'Range Not Satisfiable',
+      headers: unsatisfiableHeaders,
+    })
+  }
+
+  const { start, end } = bounds
+  const cache = await caches.open(MODEL_CACHE)
+  const startChunk = Math.floor(start / MODEL_CHUNK_SIZE)
+  const endChunk = Math.floor(end / MODEL_CHUNK_SIZE)
+  const chunks = []
+
+  for (let i = startChunk; i <= endChunk; i++) {
+    const cached = await cache.match(chunkKey(i))
+    if (!cached || !cached.body) return null
+    chunks.push(cached)
+  }
+
+  let chunkOffset = 0
+  let reader = null
+  let position = startChunk * MODEL_CHUNK_SIZE
+
+  const stream = new ReadableStream({
+    async pull(controller) {
+      while (true) {
+        if (!reader) {
+          if (chunkOffset >= chunks.length || position > end) {
+            controller.close()
+            return
+          }
+          reader = chunks[chunkOffset].body.getReader()
+        }
+
+        const { done, value } = await reader.read()
+        if (done) {
+          reader = null
+          chunkOffset++
+          continue
+        }
+
+        const valueStart = position
+        const valueEnd = position + value.byteLength - 1
+        position += value.byteLength
+
+        if (valueEnd < start) continue
+        if (valueStart > end) {
+          controller.close()
+          return
+        }
+
+        const sliceStart = Math.max(start - valueStart, 0)
+        const sliceEnd = Math.min(end - valueStart + 1, value.byteLength)
+        controller.enqueue(value.slice(sliceStart, sliceEnd))
+        return
+      }
+    },
+    cancel() {
+      reader?.cancel().catch(() => undefined)
+      reader = null
+    },
+  })
+
+  const contentLength = end - start + 1
+  const headers = modelHeaders(contentLength)
+  headers.set('Content-Range', `bytes ${start}-${end}/${MODEL_TOTAL_SIZE}`)
+  return new Response(stream, { status: 206, statusText: 'Partial Content', headers })
 }
 
 self.addEventListener('fetch', (event) => {
@@ -159,8 +280,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       (async () => {
         try {
-          const assembled = await buildAssembledModelResponse()
-          if (assembled) return assembled
+          const cachedResponse = await buildModelRangeResponse(request)
+          if (cachedResponse) return cachedResponse
           return fetch(request)
         } catch {
           return fetch(request)

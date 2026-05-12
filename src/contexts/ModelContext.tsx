@@ -10,7 +10,6 @@ import {
 import {
   getCachedModelUrl,
   isModelCached,
-  clearModelCache,
   StorageQuotaError,
 } from '../lib/model-cache'
 import { isIOS } from '../lib/device'
@@ -109,15 +108,9 @@ export default function ModelProvider({ children }: { children: ReactNode }) {
       setProgress(100)
     } catch (err) {
       console.error('Model initialization error:', err)
-      // Storage exhaustion: leave any partial chunks in cache so the next
-      // attempt resumes after the user frees space, rather than starting over.
-      const isQuotaError = err instanceof StorageQuotaError
-      if (loadedFromCache && !isQuotaError) {
-        await clearModelCache().catch(() => undefined)
-      }
       const baseMsg = err instanceof Error ? err.message : 'Failed to load AI model'
-      const suffix = loadedFromCache && !isQuotaError
-        ? ' Cached model was cleared — try again to re-download.'
+      const suffix = loadedFromCache && !(err instanceof StorageQuotaError)
+        ? ' Your downloaded model is still saved on this device — try refreshing or opening the app again.'
         : ''
       setError(baseMsg + suffix)
       setStatus('error')
