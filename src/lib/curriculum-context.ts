@@ -1,6 +1,11 @@
 import type { Curriculum } from '../types'
+import {
+  extractCurriculumStructure,
+  formatCurriculumSignals,
+} from './curriculum-structure'
 
 const CHARS_PER_TOKEN = 4
+const MIN_EXCERPT_CHARS = 500
 
 interface BuildOpts {
   curriculum: Curriculum | null | undefined
@@ -23,17 +28,29 @@ export function buildCurriculumContextSection({
 
   const charBudget = tokenBudget * CHARS_PER_TOKEN
   const fullText = curriculum.parsedText
-  const header = `OFFICIAL CURRICULUM REFERENCE (${curriculum.title}):\nUse the curriculum text below as the authoritative source for scope, sequencing, and terminology. Stay aligned with its objectives.\n\n`
+  const header = `OFFICIAL CURRICULUM REFERENCE (${curriculum.title}):\nUse the uploaded curriculum as the authoritative source for scope, sequence, terminology, competences, objectives, activities, assessment, and cross-cutting issues. Do not invent topics that conflict with it.\n\n`
   const headerBudget = charBudget - header.length
+  if (headerBudget <= 0) return header.trim()
 
-  let body: string
-  if (fullText.length <= headerBudget) {
-    body = fullText
-  } else {
-    body = sliceByKeywords(fullText, headerBudget, { topic, weekNumber })
+  const structure = curriculum.structure ?? extractCurriculumStructure(fullText)
+  const structureBudget = Math.min(Math.floor(headerBudget * 0.55), 2600)
+  const structuredSignals = formatCurriculumSignals(structure, structureBudget)
+
+  if (!structuredSignals) {
+    const body =
+      fullText.length <= headerBudget
+        ? fullText
+        : sliceByKeywords(fullText, headerBudget, { topic, weekNumber })
+    return header + body
   }
 
-  return header + body
+  const excerptBudget = headerBudget - structuredSignals.length - 28
+  const relevantExcerpt =
+    excerptBudget >= MIN_EXCERPT_CHARS
+      ? `RELEVANT SOURCE EXCERPT:\n${sliceByKeywords(fullText, excerptBudget, { topic, weekNumber })}`
+      : ''
+
+  return [header + structuredSignals, relevantExcerpt].filter(Boolean).join('\n\n')
 }
 
 function sliceByKeywords(

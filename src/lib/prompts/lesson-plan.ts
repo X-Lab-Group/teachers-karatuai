@@ -94,7 +94,10 @@ Create a lesson plan with these sections:
 
 7. HOMEWORK (optional but recommended)
 
-Format the response clearly with headers. Use simple, clear language. Ground all examples in the local context above.`
+Rules:
+- If an official curriculum reference is provided, use it as the source of truth for topic scope, unit titles, competences, objectives, activities, assessment, and cross-cutting issues
+- Do not add unrelated syllabus content; when details are missing, keep additions modest and consistent with the uploaded source
+- Format the response clearly with headers. Use simple, clear language. Ground all examples in the local context above.`
 }
 
 export function buildActivityPrompt(params: {
@@ -188,6 +191,8 @@ Produce a markdown table of contents, then for each week use this structure:
 
 Rules:
 - Sequence topics so each week builds on the last
+- Use the uploaded curriculum signals as the source of truth for scope, topic order, competences, objectives, activities, assessment, and cross-cutting issues
+- Do not add unrelated syllabus content; bridge only when needed for a coherent term sequence
 - Keep language simple and practical for African classrooms
 - Ground examples in the local context above (currency, foods, names, landmarks)
 - For exam-board terms (final term), include a revision week and a mock-exam week
@@ -217,6 +222,8 @@ Rules:
 - Number every week from 1 to ${weekCount}; do not skip or merge weeks
 - Sequence topics so each week builds on the last
 - Align with the official curriculum reference when provided
+- Prefer the uploaded curriculum's unit/topic order and terminology over generic subject sequencing
+- Do not invent topics outside the uploaded scope unless a small bridge/revision week is needed
 - Keep each topic short and teachable in one week
 - For final/exam terms, include revision and mock-exam preparation near the end`
 }
@@ -272,5 +279,6 @@ Rules:
 - Do not include a table of contents, introduction, conclusion, or extra commentary
 - Keep each field compact but specific
 - Preserve the exact week numbers and topics listed above
+- Use the uploaded curriculum signals for competences, objectives, activities, assessment, materials, and cross-cutting issues when present
 - Ground examples in the local context above`
 }

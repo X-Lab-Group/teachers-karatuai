@@ -9,6 +9,7 @@ import type {
   EducationLevel,
   Subject,
 } from '../../types'
+import { extractCurriculumStructure } from '../curriculum-structure'
 
 const db = new Dexie('TeachersDigitalLiteracy') as Dexie & {
   lessonPlans: EntityTable<LessonPlan, 'id'>
@@ -139,7 +140,10 @@ export async function deleteAssessment(id: string) {
 }
 
 export async function saveCurriculum(curriculum: Curriculum) {
-  await db.curricula.put(curriculum)
+  await db.curricula.put({
+    ...curriculum,
+    structure: curriculum.structure ?? extractCurriculumStructure(curriculum.parsedText),
+  })
   // Default the app's country from the first curriculum a teacher saves so the
   // local-context plumbing (currency, exam boards, language hints) lights up
   // without requiring a separate trip to Settings. Existing values are kept.
