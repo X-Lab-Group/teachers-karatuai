@@ -34,6 +34,11 @@ const SUBJECT_NAMES: Record<Subject, string> = {
   other: 'General Subject',
 }
 
+interface SchemeWeekPlan {
+  number: number
+  topic: string
+}
+
 function withSection(section: string): string {
   return section ? `\n\n${section}\n` : ''
 }
@@ -187,4 +192,85 @@ Rules:
 - Ground examples in the local context above (currency, foods, names, landmarks)
 - For exam-board terms (final term), include a revision week and a mock-exam week
 - Output exactly ${weekCount} weeks. No extra commentary.`
+}
+
+export function buildSchemeOutlinePrompt(params: {
+  subject: Subject
+  level: EducationLevel
+  grade: string
+  term: Term
+  weekCount: number
+  localContext?: LocalContext
+  curriculumSection?: string
+}): string {
+  const { subject, level, grade, term, weekCount, localContext, curriculumSection } = params
+  const localSection = buildLocalContextSection(localContext)
+
+  return `You are an experienced African curriculum planner. Plan the topic sequence for a ${weekCount}-week scheme of work for ${SUBJECT_NAMES[subject]}, ${grade} (${LEVEL_CONTEXT[level].split('.')[0]}), ${TERM_LABEL[term]}.
+${withSection(localSection)}${withSection(curriculumSection ?? '')}
+Return exactly ${weekCount} lines and nothing else.
+Use this exact format for every line:
+Week 1: Topic
+Week 2: Topic
+
+Rules:
+- Number every week from 1 to ${weekCount}; do not skip or merge weeks
+- Sequence topics so each week builds on the last
+- Align with the official curriculum reference when provided
+- Keep each topic short and teachable in one week
+- For final/exam terms, include revision and mock-exam preparation near the end`
+}
+
+export function buildSchemeChunkPrompt(params: {
+  subject: Subject
+  level: EducationLevel
+  grade: string
+  term: Term
+  weekCount: number
+  outline: SchemeWeekPlan[]
+  weeks: SchemeWeekPlan[]
+  localContext?: LocalContext
+  curriculumSection?: string
+}): string {
+  const {
+    subject,
+    level,
+    grade,
+    term,
+    weekCount,
+    outline,
+    weeks,
+    localContext,
+    curriculumSection,
+  } = params
+  const localSection = buildLocalContextSection(localContext)
+  const firstWeek = weeks[0]?.number
+  const lastWeek = weeks[weeks.length - 1]?.number
+  const outlineText = outline.map((week) => `Week ${week.number}: ${week.topic}`).join('\n')
+  const targetWeeks = weeks.map((week) => `Week ${week.number}: ${week.topic}`).join('\n')
+
+  return `You are writing part of a ${weekCount}-week scheme of work for ${SUBJECT_NAMES[subject]}, ${grade} (${LEVEL_CONTEXT[level].split('.')[0]}), ${TERM_LABEL[term]}.
+${withSection(localSection)}${withSection(curriculumSection ?? '')}
+FULL TERM TOPIC SEQUENCE:
+${outlineText}
+
+WRITE DETAILS ONLY FOR THESE WEEKS:
+${targetWeeks}
+
+Output markdown only. For each selected week, use this exact heading format:
+## Week {number}: {topic}
+
+Under each heading, write exactly these one-line fields:
+- **Learning Objectives**: 2 measurable objectives
+- **Sub-topics**: 2-4 sub-topics
+- **Teaching Activities**: 2 practical classroom activities
+- **Materials**: simple, locally-available items
+- **Assessment**: how the teacher checks understanding
+
+Rules:
+- Output weeks ${firstWeek}-${lastWeek} only
+- Do not include a table of contents, introduction, conclusion, or extra commentary
+- Keep each field compact but specific
+- Preserve the exact week numbers and topics listed above
+- Ground examples in the local context above`
 }
