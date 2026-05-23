@@ -26,6 +26,11 @@ import {
   findCurriculum,
 } from '../lib/db'
 import { COUNTRY_PRESETS } from '../lib/local-context'
+import {
+  countCurriculumSignals,
+  getCurriculumSignalGroups,
+  getCurriculumStructure,
+} from '../lib/curriculum-structure'
 import { SUBJECTS, LEVELS } from '../lib/constants'
 import type { Curriculum, EducationLevel, Subject } from '../types'
 
@@ -424,6 +429,7 @@ export default function CurriculumLibraryPage() {
             const countryLabel =
               COUNTRY_PRESETS.find((p) => p.code === c.country)?.name ?? c.country
             const preview = c.parsedText.slice(0, PREVIEW_CHARS)
+            const signalCount = c.structure ? countCurriculumSignals(c.structure) : 0
             return (
               <Card key={c.id} delay={index}>
                 <div className="flex items-start justify-between gap-4">
@@ -450,6 +456,7 @@ export default function CurriculumLibraryPage() {
                     </p>
                     <p className="text-xs text-slate-400 mt-2">
                       {c.parsedText.length.toLocaleString()} characters
+                      {signalCount > 0 ? ` · ${signalCount} curriculum signals` : ''}
                     </p>
                   </button>
                   <div className="flex flex-col gap-2 shrink-0">
@@ -533,6 +540,9 @@ function CurriculumDetailView({
   const countryLabel =
     COUNTRY_PRESETS.find((p) => p.code === curriculum.country)?.name ?? curriculum.country
   const levelLabel = LEVELS.find((l) => l.value === curriculum.level)?.label ?? curriculum.level
+  const structure = getCurriculumStructure(curriculum)
+  const signalGroups = getCurriculumSignalGroups(structure)
+  const signalCount = countCurriculumSignals(structure)
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -560,10 +570,32 @@ function CurriculumDetailView({
             )}
             <p className="text-xs text-slate-400 mt-1">
               {curriculum.parsedText.length.toLocaleString()} characters
+              {signalCount > 0 ? ` · ${signalCount} curriculum signals` : ''}
             </p>
           </div>
         </div>
       </Card>
+
+      {signalGroups.length > 0 && (
+        <Card hover={false}>
+          <div className="flex items-center gap-2 mb-3">
+            <CheckCircle size={16} className="text-emerald-500" />
+            <h3 className="text-base font-semibold text-slate-800">Extracted Curriculum Signals</h3>
+          </div>
+          <div className="space-y-4">
+            {signalGroups.map((group) => (
+              <section key={group.key} className="space-y-2">
+                <h4 className="text-sm font-semibold text-slate-700">{group.label}</h4>
+                <ul className="list-disc pl-5 space-y-1 text-sm text-slate-600 leading-relaxed">
+                  {group.items.map((item, index) => (
+                    <li key={`${group.key}-${index}`}>{item}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <Card hover={false}>
         <div className="flex items-center gap-2 mb-3">

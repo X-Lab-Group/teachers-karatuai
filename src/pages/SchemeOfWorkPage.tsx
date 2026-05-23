@@ -20,7 +20,7 @@ import ReactMarkdown from 'react-markdown'
 import { Button, Card, Input, Select } from '../components/ui'
 import { useModel } from '../hooks/useModel'
 import { useLocalContext } from '../hooks/useLocalContext'
-import { buildSchemePrompt } from '../lib/prompts/lesson-plan'
+import { buildSchemeChunkPrompt, buildSchemeOutlinePrompt } from '../lib/prompts/lesson-plan'
 import {
   getSchemes,
   saveScheme,
@@ -30,7 +30,7 @@ import {
   getCurriculum,
 } from '../lib/db'
 import { exportAsPDF } from '../lib/print'
-import { parseSchemeWeeks } from '../lib/scheme-parser'
+import { parseSchemeOutlineWeeks, parseSchemeWeeks, type SchemeWeek } from '../lib/scheme-parser'
 import { buildCurriculumContextSection } from '../lib/curriculum-context'
 import { SUBJECTS, LEVELS } from '../lib/constants'
 import type { EducationLevel, Subject, Term, SchemeOfWork } from '../types'
@@ -41,6 +41,10 @@ const TERMS: { value: Term; label: string }[] = [
   { value: 'third', label: 'Third Term' },
 ]
 
+const SCHEME_CHUNK_SIZE = 3
+const SCHEME_CURRICULUM_TOKEN_BUDGET = 600
+const SCHEME_GENERATION_ATTEMPTS = 2
+
 interface SchemePrefill {
   subject?: Subject
   level?: EducationLevel
@@ -49,6 +53,39 @@ interface SchemePrefill {
 }
 
 type SchemeNavState = { prefill?: SchemePrefill } | null
+
+function expectedWeekNumbers(weekCount: number) {
+  return Array.from({ length: weekCount }, (_, index) => index + 1)
+}
+
+function missingWeekNumbers(weeks: SchemeWeek[], weekCount: number) {
+  const found = new Set(weeks.map((week) => week.number))
+  return expectedWeekNumbers(weekCount).filter((weekNumber) => !found.has(weekNumber))
+}
+
+function missingSelectedWeeks(expectedWeeks: SchemeWeek[], generatedWeeks: SchemeWeek[]) {
+  const found = new Set(generatedWeeks.map((week) => week.number))
+  return expectedWeeks.map((week) => week.number).filter((weekNumber) => !found.has(weekNumber))
+}
+
+function formatWeekList(weekNumbers: number[]) {
+  return weekNumbers.join(', ')
+}
+
+function chunkWeeks(weeks: SchemeWeek[], size: number) {
+  const chunks: SchemeWeek[][] = []
+  for (let i = 0; i < weeks.length; i += size) {
+    chunks.push(weeks.slice(i, i + size))
+  }
+  return chunks
+}
+
+function normalizeOutlineWeeks(weeks: SchemeWeek[], weekCount: number) {
+  const byNumber = new Map(weeks.map((week) => [week.number, week]))
+  return expectedWeekNumbers(weekCount)
+    .map((weekNumber) => byNumber.get(weekNumber))
+    .filter((week): week is SchemeWeek => Boolean(week))
+}
 
 export default function SchemeOfWorkPage() {
   const location = useLocation()
@@ -61,6 +98,8 @@ export default function SchemeOfWorkPage() {
   const [showForm, setShowForm] = useState(Boolean(navStateOnMount?.prefill))
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedContent, setGeneratedContent] = useState('')
+  const [generationStep, setGenerationStep] = useState('')
+  const [generationError, setGenerationError] = useState<string | null>(null)
   const [viewing, setViewing] = useState<SchemeOfWork | null>(null)
   const [savedScheme, setSavedScheme] = useState<SchemeOfWork | null>(null)
   const [showRawMarkdown, setShowRawMarkdown] = useState(false)
@@ -141,6 +180,9 @@ export default function SchemeOfWorkPage() {
 
     setIsGenerating(true)
     setGeneratedContent('')
+    setGenerationStep('Planning the term sequence...')
+    setGenerationError(null)
+    setSavedScheme(null)
     bufferRef.current = ''
 
     const flush = () => {
@@ -149,43 +191,138 @@ export default function SchemeOfWorkPage() {
       setGeneratedContent((prev) => (prev === next ? prev : next))
     }
 
+    const queueGeneratedContent = (content: string) => {
+      bufferRef.current = content
+      if (rafRef.current === null) {
+        rafRef.current = requestAnimationFrame(flush)
+      }
+    }
+
     try {
-      const weekCount = parseInt(formData.weekCount)
+      const weekCount = parseInt(formData.weekCount, 10)
+      if (!Number.isFinite(weekCount) || weekCount < 1) {
+        throw new Error('Enter a valid number of weeks before generating a scheme.')
+      }
+
+      const subject = formData.subject as Subject
+      const level = formData.level as EducationLevel
+      const termLabel = TERMS.find((t) => t.value === formData.term)?.label ?? ''
+      const subjectLabel = SUBJECTS.find((s) => s.value === formData.subject)?.label ?? ''
       const curriculumSection = buildCurriculumContextSection({
         curriculum: matchedCurriculum,
-        tokenBudget: 2500,
-      })
-      const prompt = buildSchemePrompt({
-        subject: formData.subject as Subject,
-        level: formData.level as EducationLevel,
-        grade: formData.grade,
-        term: formData.term,
-        weekCount,
-        localContext,
-        curriculumSection,
+        tokenBudget: SCHEME_CURRICULUM_TOKEN_BUDGET,
       })
 
-      const response = await generate(prompt, (token: string) => {
-        bufferRef.current += token
-        if (rafRef.current === null) {
-          rafRef.current = requestAnimationFrame(flush)
+      let outlineWeeks: SchemeWeek[] = []
+      let missingOutlineWeeks = expectedWeekNumbers(weekCount)
+
+      for (let attempt = 0; attempt < SCHEME_GENERATION_ATTEMPTS; attempt++) {
+        setGenerationStep(
+          attempt === 0
+            ? 'Planning the term sequence...'
+            : `Repairing the term sequence for weeks ${formatWeekList(missingOutlineWeeks)}...`,
+        )
+
+        const outlinePrompt =
+          buildSchemeOutlinePrompt({
+            subject,
+            level,
+            grade: formData.grade,
+            term: formData.term,
+            weekCount,
+            localContext,
+            curriculumSection,
+          }) +
+          (attempt > 0
+            ? `\n\nYour previous response missed weeks ${formatWeekList(missingOutlineWeeks)}. Return the full sequence again with exactly ${weekCount} numbered lines.`
+            : '')
+
+        const outlineResponse = await generate(outlinePrompt)
+        outlineWeeks = normalizeOutlineWeeks(parseSchemeOutlineWeeks(outlineResponse), weekCount)
+        missingOutlineWeeks = missingWeekNumbers(outlineWeeks, weekCount)
+        if (missingOutlineWeeks.length === 0) break
+      }
+
+      if (missingOutlineWeeks.length > 0) {
+        throw new Error(
+          `The AI could not plan all ${weekCount} weeks. Missing weeks: ${formatWeekList(missingOutlineWeeks)}. Please try again.`,
+        )
+      }
+
+      let finalContent = ''
+      const chunks = chunkWeeks(outlineWeeks, SCHEME_CHUNK_SIZE)
+
+      for (const weeksInChunk of chunks) {
+        let chunkContent = ''
+        let missingChunkWeeks = weeksInChunk.map((week) => week.number)
+        const firstWeek = weeksInChunk[0]?.number
+        const lastWeek = weeksInChunk[weeksInChunk.length - 1]?.number
+
+        for (let attempt = 0; attempt < SCHEME_GENERATION_ATTEMPTS; attempt++) {
+          let chunkBuffer = ''
+          setGenerationStep(
+            attempt === 0
+              ? `Generating weeks ${firstWeek}-${lastWeek} of ${weekCount}...`
+              : `Regenerating weeks ${formatWeekList(missingChunkWeeks)}...`,
+          )
+          queueGeneratedContent(finalContent)
+
+          const chunkPrompt =
+            buildSchemeChunkPrompt({
+              subject,
+              level,
+              grade: formData.grade,
+              term: formData.term,
+              weekCount,
+              outline: outlineWeeks,
+              weeks: weeksInChunk,
+              localContext,
+              curriculumSection,
+            }) +
+            (attempt > 0
+              ? `\n\nYour previous response missed weeks ${formatWeekList(missingChunkWeeks)}. Return all requested week sections again, with headings exactly like "## Week 1: Topic".`
+              : '')
+
+          const response = await generate(chunkPrompt, (token: string) => {
+            chunkBuffer += token
+            queueGeneratedContent([finalContent, chunkBuffer].filter(Boolean).join('\n\n'))
+          })
+
+          chunkContent = (response || chunkBuffer).trim()
+          missingChunkWeeks = missingSelectedWeeks(weeksInChunk, parseSchemeWeeks(chunkContent))
+          if (missingChunkWeeks.length === 0) break
         }
-      })
+
+        if (missingChunkWeeks.length > 0) {
+          throw new Error(
+            `The AI could not complete weeks ${formatWeekList(missingChunkWeeks)}. Please try again.`,
+          )
+        }
+
+        finalContent = [finalContent, chunkContent].filter(Boolean).join('\n\n')
+        queueGeneratedContent(finalContent)
+      }
 
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current)
         rafRef.current = null
       }
-      const finalContent = response || bufferRef.current
+
+      const finalWeeks = parseSchemeWeeks(finalContent)
+      const missingFinalWeeks = missingWeekNumbers(finalWeeks, weekCount)
+      if (missingFinalWeeks.length > 0) {
+        throw new Error(
+          `The generated scheme is incomplete. Missing weeks: ${formatWeekList(missingFinalWeeks)}. Please try again.`,
+        )
+      }
+
       setGeneratedContent(finalContent)
 
-      const termLabel = TERMS.find((t) => t.value === formData.term)?.label ?? ''
-      const subjectLabel = SUBJECTS.find((s) => s.value === formData.subject)?.label ?? ''
       const scheme: SchemeOfWork = {
         id: crypto.randomUUID(),
         title: `${subjectLabel} - ${formData.grade} - ${termLabel}`,
-        subject: formData.subject as Subject,
-        level: formData.level as EducationLevel,
+        subject,
+        level,
         grade: formData.grade,
         term: formData.term,
         weekCount,
@@ -198,8 +335,15 @@ export default function SchemeOfWorkPage() {
       setSavedScheme(scheme)
     } catch (err) {
       console.error(err)
+      if (bufferRef.current) setGeneratedContent(bufferRef.current)
+      setGenerationError(err instanceof Error ? err.message : 'Failed to generate the scheme.')
     } finally {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current)
+        rafRef.current = null
+      }
       setIsGenerating(false)
+      setGenerationStep('')
     }
   }
 
@@ -212,6 +356,8 @@ export default function SchemeOfWorkPage() {
   const handleReset = () => {
     setShowForm(true)
     setGeneratedContent('')
+    setGenerationStep('')
+    setGenerationError(null)
     setViewing(null)
     setSavedScheme(null)
     setParentCurriculumId(null)
@@ -270,11 +416,25 @@ export default function SchemeOfWorkPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold text-slate-800">Create Scheme of Work</h2>
           {!isGenerating && (
-            <Button variant="ghost" onClick={() => { setShowForm(false); setGeneratedContent('') }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowForm(false)
+                setGeneratedContent('')
+                setGenerationError(null)
+                setGenerationStep('')
+              }}
+            >
               Cancel
             </Button>
           )}
         </div>
+
+        {generationError && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            {generationError}
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           {!generatedContent && !isGenerating && (
@@ -387,7 +547,9 @@ export default function SchemeOfWorkPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-slate-800">Building your scheme of work...</p>
-                      <p className="text-sm text-slate-500">This can take a minute for full terms</p>
+                      <p className="text-sm text-slate-500">
+                        {generationStep || 'This can take a minute for full terms'}
+                      </p>
                     </div>
                   </div>
                 )}

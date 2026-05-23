@@ -103,7 +103,20 @@ export interface Curriculum {
   sourceFileName?: string
   pasteText?: string
   parsedText: string
+  structure?: CurriculumStructure
   createdAt: Date
+}
+
+export interface CurriculumStructure {
+  units: string[]
+  competences: string[]
+  objectives: string[]
+  content: string[]
+  activities: string[]
+  assessments: string[]
+  materials: string[]
+  crossCuttingIssues: string[]
+  references: string[]
 }
 
 export interface AppSettings {
