@@ -33,7 +33,7 @@ import { exportAsPDF } from '../lib/print'
 import { parseSchemeOutlineWeeks, parseSchemeWeeks, type SchemeWeek } from '../lib/scheme-parser'
 import { buildCurriculumContextSection } from '../lib/curriculum-context'
 import { SUBJECTS, LEVELS } from '../lib/constants'
-import type { EducationLevel, Subject, Term, SchemeOfWork } from '../types'
+import type { EducationLevel, Subject, Term, SchemeOfWork, LessonPlan } from '../types'
 
 const TERMS: { value: Term; label: string }[] = [
   { value: 'first', label: 'First Term' },
@@ -44,6 +44,14 @@ const TERMS: { value: Term; label: string }[] = [
 const SCHEME_CHUNK_SIZE = 3
 const SCHEME_CURRICULUM_TOKEN_BUDGET = 600
 const SCHEME_GENERATION_ATTEMPTS = 2
+type SchemeWeekDetailKey = Exclude<keyof SchemeWeek, 'number' | 'topic'>
+const WEEK_DETAIL_FIELDS: Array<{ key: SchemeWeekDetailKey; label: string }> = [
+  { key: 'learningObjectives', label: 'Learning objectives' },
+  { key: 'subTopics', label: 'Sub-topics' },
+  { key: 'teachingActivities', label: 'Teaching activities' },
+  { key: 'materials', label: 'Materials' },
+  { key: 'assessment', label: 'Assessment' },
+]
 
 interface SchemePrefill {
   subject?: Subject
@@ -183,6 +191,7 @@ export default function SchemeOfWorkPage() {
     setGenerationStep('Planning the term sequence...')
     setGenerationError(null)
     setSavedScheme(null)
+    setShowRawMarkdown(false)
     bufferRef.current = ''
 
     const flush = () => {
@@ -361,6 +370,7 @@ export default function SchemeOfWorkPage() {
     setViewing(null)
     setSavedScheme(null)
     setParentCurriculumId(null)
+    setShowRawMarkdown(false)
     setFormData({
       subject: '',
       level: '',
@@ -369,6 +379,25 @@ export default function SchemeOfWorkPage() {
       weekCount: '12',
     })
   }
+
+  const handleCreateLessonFromScheme = (scheme: SchemeOfWork, week: SchemeWeek) => {
+    navigate('/lesson', {
+      state: {
+        prefill: {
+          topic: week.topic,
+          subject: scheme.subject,
+          level: scheme.level,
+          grade: scheme.grade,
+          schemeId: scheme.id,
+          weekNumber: week.number,
+          weekTopic: week.topic,
+          curriculumId: scheme.curriculumId,
+        },
+      },
+    })
+  }
+
+  const generatedWeeks = generatedContent ? parseSchemeWeeks(generatedContent) : []
 
   if (viewing) {
     return (
@@ -383,22 +412,7 @@ export default function SchemeOfWorkPage() {
         onToggleRaw={() => setShowRawMarkdown((prev) => !prev)}
         onCopy={handleCopy}
         onExportPDF={handleExportPDF}
-        onCreateLessonForWeek={(week) => {
-          navigate('/lesson', {
-            state: {
-              prefill: {
-                topic: week.topic,
-                subject: viewing.subject,
-                level: viewing.level,
-                grade: viewing.grade,
-                schemeId: viewing.id,
-                weekNumber: week.number,
-                weekTopic: week.topic,
-                curriculumId: viewing.curriculumId,
-              },
-            },
-          })
-        }}
+        onCreateLessonForWeek={(week) => handleCreateLessonFromScheme(viewing, week)}
         onOpenLesson={(lessonId) => {
           navigate('/lesson', { state: { openLessonId: lessonId } })
         }}
@@ -553,23 +567,40 @@ export default function SchemeOfWorkPage() {
                     </div>
                   </div>
                 )}
-                <div className="prose prose-slate max-w-none">
-                  {isGenerating ? (
-                    <div className="whitespace-pre-wrap font-sans text-slate-700 text-sm leading-relaxed">
-                      {generatedContent}
+                {isGenerating ? (
+                  <div className="whitespace-pre-wrap font-sans text-slate-700 text-sm leading-relaxed">
+                    {generatedContent}
+                  </div>
+                ) : generatedWeeks.length > 0 && !showRawMarkdown ? (
+                  <div className="flex items-start gap-3 rounded-2xl bg-indigo-50/70 p-4 text-sm text-slate-600">
+                    <CalendarRange size={18} className="mt-0.5 shrink-0 text-indigo-500" />
+                    <div>
+                      <p className="font-semibold text-slate-800">Scheme saved as week cards</p>
+                      <p className="mt-1">{generatedWeeks.length} weeks ready for lesson planning.</p>
                     </div>
-                  ) : (
+                  </div>
+                ) : (
+                  <div className="prose prose-slate max-w-none">
                     <ReactMarkdown>{generatedContent}</ReactMarkdown>
-                  )}
-                </div>
+                  </div>
+                )}
                 {!isGenerating && generatedContent && (
                   <>
-                    <div className="mt-6 flex gap-3">
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      {generatedWeeks.length > 0 && (
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowRawMarkdown((prev) => !prev)}
+                          className="flex-1 min-w-[160px]"
+                        >
+                          {showRawMarkdown ? 'Show Week Cards' : 'Show Raw Scheme'}
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         onClick={() => handleCopy(generatedContent)}
                         icon={copied ? <Check size={18} /> : <Copy size={18} />}
-                        className="flex-1"
+                        className="flex-1 min-w-[140px]"
                       >
                         {copied ? 'Copied!' : 'Copy'}
                       </Button>
@@ -582,7 +613,7 @@ export default function SchemeOfWorkPage() {
                           )
                         }
                         icon={<Download size={18} />}
-                        className="flex-1"
+                        className="flex-1 min-w-[140px]"
                       >
                         Export PDF
                       </Button>
@@ -609,6 +640,18 @@ export default function SchemeOfWorkPage() {
                   </>
                 )}
               </Card>
+              {!isGenerating && generatedWeeks.length > 0 && !showRawMarkdown && (
+                <div className="mt-4">
+                  <SchemeWeekCards
+                    weeks={generatedWeeks}
+                    onCreateLessonForWeek={
+                      savedScheme
+                        ? (week) => handleCreateLessonFromScheme(savedScheme, week)
+                        : undefined
+                    }
+                  />
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -661,26 +704,34 @@ export default function SchemeOfWorkPage() {
                   {scheme.weekCount} weeks &bull; {scheme.grade}
                 </p>
               </div>
-              <div className="flex gap-2">
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setViewing(scheme)}
-                  className="p-2 rounded-xl bg-indigo-50 text-indigo-500 hover:bg-indigo-100 transition-colors"
-                  aria-label="View scheme"
-                >
-                  <Eye size={18} />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleDelete(scheme.id)}
-                  className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors"
-                  aria-label="Delete scheme"
-                >
-                  <Trash2 size={18} />
-                </motion.button>
-              </div>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => handleDelete(scheme.id)}
+                className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-500 transition-colors"
+                aria-label="Delete scheme"
+              >
+                <Trash2 size={18} />
+              </motion.button>
+            </div>
+            <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setViewing(scheme)}
+                icon={<Eye size={16} />}
+                className="flex-1 min-w-[130px]"
+              >
+                View
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setViewing(scheme)}
+                icon={<BookOpen size={16} />}
+                className="flex-1 min-w-[150px]"
+              >
+                Spawn Lessons
+              </Button>
             </div>
           </Card>
         ))}
@@ -753,50 +804,12 @@ function SchemeDetailView({
       </Card>
 
       {weeks.length > 0 && !showRawMarkdown && (
-        <div className="space-y-3">
-          {weeks.map((week) => {
-            const weekLessons = lessonsByWeek.get(week.number) ?? []
-            return (
-              <Card key={week.number} hover={false}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-                      Week {week.number}
-                    </p>
-                    <h3 className="font-semibold text-slate-800 text-base mt-1">{week.topic}</h3>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => onCreateLessonForWeek(week)}
-                    icon={<BookOpen size={16} />}
-                  >
-                    Create Lesson
-                  </Button>
-                </div>
-                {weekLessons.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
-                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                      Saved lessons
-                    </p>
-                    {weekLessons.map((lesson) => (
-                      <button
-                        key={lesson.id}
-                        onClick={() => onOpenLesson(lesson.id)}
-                        className="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-xl bg-slate-50 hover:bg-teal-50 transition-colors text-left"
-                      >
-                        <span className="flex items-center gap-2 min-w-0">
-                          <FileText size={14} className="text-teal-500 shrink-0" />
-                          <span className="text-sm text-slate-700 truncate">{lesson.title}</span>
-                        </span>
-                        <ArrowRight size={14} className="text-slate-400 shrink-0" />
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            )
-          })}
-        </div>
+        <SchemeWeekCards
+          weeks={weeks}
+          lessonsByWeek={lessonsByWeek}
+          onCreateLessonForWeek={onCreateLessonForWeek}
+          onOpenLesson={onOpenLesson}
+        />
       )}
 
       {(showRawMarkdown || weeks.length === 0) && (
@@ -831,5 +844,93 @@ function SchemeDetailView({
         </Button>
       </div>
     </motion.div>
+  )
+}
+
+interface SchemeWeekCardsProps {
+  weeks: SchemeWeek[]
+  lessonsByWeek?: Map<number, LessonPlan[]>
+  onCreateLessonForWeek?: (week: SchemeWeek) => void
+  onOpenLesson?: (lessonId: string) => void
+}
+
+function SchemeWeekCards({
+  weeks,
+  lessonsByWeek,
+  onCreateLessonForWeek,
+  onOpenLesson,
+}: SchemeWeekCardsProps) {
+  return (
+    <div className="space-y-3">
+      {weeks.map((week) => {
+        const weekLessons = lessonsByWeek?.get(week.number) ?? []
+        const detailFields = WEEK_DETAIL_FIELDS.map((field) => ({
+          ...field,
+          value: week[field.key],
+        })).filter(
+          (field): field is { key: SchemeWeekDetailKey; label: string; value: string } =>
+            Boolean(field.value),
+        )
+
+        return (
+          <Card key={week.number} hover={false}>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
+                  Week {week.number}
+                </p>
+                <h3 className="mt-1 text-base font-semibold leading-snug text-slate-800">
+                  {week.topic}
+                </h3>
+              </div>
+              {onCreateLessonForWeek && (
+                <Button
+                  size="sm"
+                  onClick={() => onCreateLessonForWeek(week)}
+                  icon={<BookOpen size={16} />}
+                  className="w-full shrink-0 sm:w-auto"
+                >
+                  Create Lesson
+                </Button>
+              )}
+            </div>
+
+            {detailFields.length > 0 && (
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {detailFields.map((field) => (
+                  <div key={field.key} className="rounded-2xl bg-slate-50 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      {field.label}
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-slate-700">{field.value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {weekLessons.length > 0 && onOpenLesson && (
+              <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  Saved lessons
+                </p>
+                {weekLessons.map((lesson) => (
+                  <button
+                    key={lesson.id}
+                    onClick={() => onOpenLesson(lesson.id)}
+                    className="flex w-full items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2 text-left transition-colors hover:bg-teal-50"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <FileText size={14} className="shrink-0 text-teal-500" />
+                      <span className="truncate text-sm text-slate-700">{lesson.title}</span>
+                    </span>
+                    <ArrowRight size={14} className="shrink-0 text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </Card>
+        )
+      })}
+    </div>
   )
 }
