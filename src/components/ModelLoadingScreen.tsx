@@ -25,22 +25,22 @@ function UnsupportedOverlay() {
         </div>
 
         <h1 className="text-2xl font-bold text-slate-800 mb-3">
-          KaratuAI can't run on iPhone yet
+          Cloud AI unavailable on this iPhone
         </h1>
 
         <p className="text-slate-600 mb-3">
-          The on-device AI needs more memory than browsers on iPhone allow. The
-          tab will crash before the model finishes loading.
+          On-device AI needs more memory than iPhone browsers allow. When cloud
+          AI is configured and you are online, this page works on iPhone too.
         </p>
 
         <p className="text-slate-600 mb-2 font-medium">To use KaratuAI today:</p>
         <ul className="text-slate-600 text-left mb-6 space-y-1 inline-block">
-          <li>• Open it in Chrome on a laptop or desktop</li>
-          <li>• Or use an Android phone</li>
+          <li>• Check your internet connection and refresh</li>
+          <li>• Or open it in Chrome on a laptop / Android</li>
         </ul>
 
         <p className="text-xs text-slate-400">
-          We're working on a native iPhone app to fix this.
+          A native iPhone app is still on the roadmap for full offline use.
         </p>
       </motion.div>
     </div>
@@ -54,7 +54,7 @@ function LoadingOverlay() {
   const getStatusText = () => {
     switch (status) {
       case 'checking':
-        return 'Checking for cached model...'
+        return 'Looking for cloud AI, then checking for an on-device model...'
       case 'downloading':
         return 'Downloading AI model for offline use. This only happens once.'
       case 'loading':
@@ -68,6 +68,7 @@ function LoadingOverlay() {
 
   const getTitle = () => {
     if (status === 'error') return 'Connection Issue'
+    if (status === 'checking') return 'Connecting to AI'
     if (status === 'loading') return 'Loading from Cache'
     if (status === 'downloading') return 'Downloading AI Model'
     return 'Loading AI Model'

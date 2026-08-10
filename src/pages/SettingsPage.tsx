@@ -36,8 +36,12 @@ const COUNTRY_OPTIONS = COUNTRY_PRESETS.map((c) => ({ value: c.code, label: c.na
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [supportOpen, setSupportOpen] = useState(false)
-  const { isReady, status, progress, error, retry } = useModel()
+  const { isReady, status, progress, error, retry, backend } = useModel()
   const isDownloading = status === 'downloading'
+  const readySubtitle =
+    backend === 'cloud'
+      ? 'Using live Gemini in the cloud while you are online'
+      : 'Gemma is ready on this device for offline use'
 
   useEffect(() => {
     getSettings().then(setSettings)
@@ -102,7 +106,15 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <Card title="AI Model" subtitle="Download the AI to work offline" delay={0}>
+      <Card
+        title="AI Model"
+        subtitle={
+          backend === 'cloud'
+            ? 'Cloud AI is active; download Gemma anytime for offline use'
+            : 'Download the AI to work offline'
+        }
+        delay={0}
+      >
         <div className="space-y-4">
           {isReady ? (
             <motion.div
@@ -114,8 +126,10 @@ export default function SettingsPage() {
                 <CheckCircle size={20} className="text-white" />
               </div>
               <div>
-                <p className="font-semibold text-teal-700">AI Model Ready!</p>
-                <p className="text-sm text-teal-600">Gemma 4 is ready to generate content</p>
+                <p className="font-semibold text-teal-700">
+                  {backend === 'cloud' ? 'Cloud AI Ready!' : 'AI Model Ready!'}
+                </p>
+                <p className="text-sm text-teal-600">{readySubtitle}</p>
               </div>
             </motion.div>
           ) : isDownloading ? (
