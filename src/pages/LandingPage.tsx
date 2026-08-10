@@ -20,7 +20,6 @@ import {
   Lightbulb,
   ArrowUpRight,
   Code,
-  Star,
   Users,
   Mail,
   School,
@@ -32,8 +31,6 @@ import Logo from '../components/Logo'
 import ShareClassroomCard from '../components/ShareClassroomCard'
 import { hasInteractedWithClassroomForm } from '../lib/share-classroom'
 
-// Lucide v1 dropped brand icons, but the GitHub mark is recognizable enough
-// that an inline SVG carries more meaning here than a generic git-branch glyph.
 function GithubIcon({ size = 16, className }: { size?: number; className?: string }) {
   return (
     <svg
@@ -58,57 +55,64 @@ const GITHUB_URL = 'https://github.com/X-Lab-Group/teachers-karatuai'
 const CONTACT_EMAIL = 'info@karatuai.com'
 
 const fadeIn = {
-  initial: { opacity: 0, y: 24 },
+  initial: { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true, margin: '-80px' },
-  transition: { duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] as const },
+  transition: { duration: 0.55, ease: [0.21, 0.47, 0.32, 0.98] as const },
 }
 
-function GradientBackdrop() {
+function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden -z-10">
-      <div className="absolute -top-40 -left-32 w-[680px] h-[680px] rounded-full bg-teal-200/40 blur-3xl" />
-      <div className="absolute -top-20 right-0 w-[520px] h-[520px] rounded-full bg-emerald-200/40 blur-3xl" />
-      <div className="absolute top-[420px] left-1/3 w-[420px] h-[420px] rounded-full bg-sky-200/30 blur-3xl" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(15,23,42,0.06)_1px,transparent_0)] [background-size:24px_24px] [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_70%)]" />
-    </div>
+    <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-landing-brand">
+      {children}
+    </p>
   )
 }
 
 function TopNav() {
   const { scrollY } = useScroll()
-  const opacity = useTransform(scrollY, [0, 80], [0, 1])
+  const borderOpacity = useTransform(scrollY, [0, 40], [0, 1])
   return (
-    <header className="sticky top-0 z-40">
+    <header className="sticky top-0 z-40 bg-white">
       <motion.div
-        style={{ opacity }}
-        className="absolute inset-0 bg-white/70 backdrop-blur-md border-b border-slate-200/60"
+        style={{ opacity: borderOpacity }}
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-landing-hairline"
       />
-      <div className="relative max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div className="relative mx-auto flex h-16 max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link to="/" className="flex items-center gap-2.5">
           <Logo size={32} />
-          <span className="font-bold text-slate-900 tracking-tight">KaratuAI</span>
+          <span className="font-bold tracking-tight text-landing-ink">KaratuAI</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-          <a href="#features" className="hover:text-slate-900 transition-colors">Features</a>
-          <a href="#how" className="hover:text-slate-900 transition-colors">How it works</a>
-          <a href="#open-source" className="hover:text-slate-900 transition-colors">Open source</a>
-          <a href="#sponsor" className="hover:text-slate-900 transition-colors">Sponsor</a>
-          <a href="#download" className="hover:text-slate-900 transition-colors">Download</a>
+        <nav className="hidden items-center gap-8 text-sm font-medium text-landing-muted md:flex">
+          <a href="#features" className="transition-colors hover:text-landing-ink">
+            Features
+          </a>
+          <a href="#how" className="transition-colors hover:text-landing-ink">
+            How it works
+          </a>
+          <a href="#open-source" className="transition-colors hover:text-landing-ink">
+            Open source
+          </a>
+          <a href="#sponsor" className="transition-colors hover:text-landing-ink">
+            Sponsor
+          </a>
+          <a href="#download" className="transition-colors hover:text-landing-ink">
+            Download
+          </a>
         </nav>
         <div className="flex items-center gap-2">
           <a
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
-            className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors"
+            className="hidden items-center gap-2 rounded-[12px] px-3 py-2 text-sm font-medium text-landing-ink transition-colors hover:bg-landing-canvas sm:flex"
           >
             <GithubIcon size={16} />
             <span>GitHub</span>
           </a>
           <a
             href="#download"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-[12px] bg-landing-ink px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-landing-ink/90"
           >
             Get the app
             <ArrowRight size={14} />
@@ -122,227 +126,253 @@ function TopNav() {
 function Hero({ device, onDownloadClick }: { device: DeviceKind; onDownloadClick: () => void }) {
   const showWeb = device !== 'ios'
   return (
-    <section className="relative pt-16 pb-20 sm:pt-24 sm:pb-32">
-      <GradientBackdrop />
-      <div className="max-w-4xl mx-auto px-6 text-center">
-        <motion.a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noreferrer"
-          {...fadeIn}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white border border-slate-200 shadow-sm text-xs font-medium text-slate-700 hover:border-teal-300 hover:text-teal-700 transition-colors mb-8"
-        >
-          <span className="flex items-center gap-1 text-teal-600">
-            <Star size={12} className="fill-current" />
-            <span className="font-semibold">Open source</span>
-          </span>
-          <span className="w-px h-3 bg-slate-300" />
-          <span>v{ANDROID_APK_VERSION} just shipped</span>
-          <ArrowUpRight size={12} className="text-slate-400" />
-        </motion.a>
-
-        <motion.h1
-          {...fadeIn}
-          transition={{ ...fadeIn.transition, delay: 0.05 }}
-          className="text-5xl sm:text-6xl lg:text-7xl font-bold text-slate-900 tracking-tight text-balance leading-[1.05]"
-        >
-          AI lesson planning
-          <br />
-          <span className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 bg-clip-text text-transparent">
-            that lives on your phone.
-          </span>
-        </motion.h1>
-
-        <motion.p
-          {...fadeIn}
-          transition={{ ...fadeIn.transition, delay: 0.15 }}
-          className="mt-6 text-lg sm:text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto text-pretty"
-        >
-          Generate schemes of work, lesson plans, classroom activities, and
-          assessments — entirely offline, completely private, free forever.
-          Built for teachers across Africa.
-        </motion.p>
-
-        <motion.div
-          {...fadeIn}
-          transition={{ ...fadeIn.transition, delay: 0.25 }}
-          className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3"
-        >
-          {showWeb && (
-            <Link
-              to="/curriculum"
-              className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 text-white font-semibold shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 hover:-translate-y-0.5 transition-all"
-            >
-              <Globe size={18} />
-              <span>Open in browser</span>
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
-            </Link>
-          )}
-          <button
-            onClick={onDownloadClick}
-            className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white border border-slate-200 text-slate-800 font-semibold shadow-sm hover:border-slate-300 hover:-translate-y-0.5 transition-all"
+    <section className="relative overflow-hidden bg-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_82%_42%,rgba(12,140,126,0.06),transparent_42%)]" />
+      <div className="relative z-10 mx-auto grid max-w-[1280px] items-center gap-10 px-4 pb-14 pt-10 sm:px-6 lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:gap-14 lg:px-8 lg:pb-16 lg:pt-12">
+        <div className="mx-auto flex w-full max-w-[34rem] flex-col lg:mx-0">
+          <motion.a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noreferrer"
+            {...fadeIn}
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-landing-brand/22 bg-landing-brand/8 px-3.5 py-1.5 text-[12px] font-semibold tracking-[0.01em] text-[#075f57] transition-colors hover:border-landing-brand/40"
           >
-            <Download size={18} />
-            <span>{device === 'android' ? 'Download for Android' : 'Get the mobile app'}</span>
-          </button>
-        </motion.div>
+            Open source · v{ANDROID_APK_VERSION}
+            <ArrowUpRight size={12} />
+          </motion.a>
+
+          <motion.h1
+            {...fadeIn}
+            transition={{ ...fadeIn.transition, delay: 0.05 }}
+            className="mt-5 text-[2.65rem] font-bold leading-[1.04] tracking-[-0.045em] text-landing-ink sm:text-[3.1rem] lg:text-[3.4rem]"
+          >
+            AI lesson planning{' '}
+            <span className="text-landing-brand">that lives on your phone.</span>
+          </motion.h1>
+
+          <motion.p
+            {...fadeIn}
+            transition={{ ...fadeIn.transition, delay: 0.12 }}
+            className="mt-5 max-w-[40ch] text-[15px] leading-7 text-landing-muted sm:text-[16px]"
+          >
+            Generate schemes of work, lesson plans, classroom activities, and assessments —
+            entirely offline, completely private, free forever. Built for teachers across Africa.
+          </motion.p>
+
+          <motion.div
+            {...fadeIn}
+            transition={{ ...fadeIn.transition, delay: 0.2 }}
+            className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap"
+          >
+            {showWeb && (
+              <Link
+                to="/curriculum"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] bg-landing-brand px-5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(12,140,126,0.2)] transition hover:bg-landing-brand-hover"
+              >
+                <Globe size={18} />
+                Open in browser
+                <ArrowRight size={16} />
+              </Link>
+            )}
+            <button
+              type="button"
+              onClick={onDownloadClick}
+              className="inline-flex h-12 items-center justify-center gap-2 rounded-[12px] border border-landing-brand/35 bg-white px-5 text-sm font-semibold text-landing-brand transition hover:border-landing-brand hover:bg-landing-brand/5"
+            >
+              <Download size={18} />
+              {device === 'android' ? 'Download for Android' : 'Get the mobile app'}
+            </button>
+          </motion.div>
+
+          <motion.p
+            {...fadeIn}
+            transition={{ ...fadeIn.transition, delay: 0.28 }}
+            className="mt-4 text-xs font-medium text-landing-muted"
+          >
+            Works offline · No account needed · MIT licensed
+          </motion.p>
+        </div>
 
         <motion.div
           {...fadeIn}
-          transition={{ ...fadeIn.transition, delay: 0.35 }}
-          className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-slate-500"
+          transition={{ ...fadeIn.transition, delay: 0.18 }}
+          className="relative mx-auto w-full max-w-[640px] lg:mx-0 lg:max-w-none"
         >
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 size={14} className="text-teal-500" />
-            Works offline
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 size={14} className="text-teal-500" />
-            No account needed
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 size={14} className="text-teal-500" />
-            MIT licensed
-          </span>
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 size={14} className="text-teal-500" />
-            Powered by Gemma
-          </span>
+          <ProductPreview />
         </motion.div>
       </div>
-
-      <ProductPreview />
     </section>
   )
 }
 
 function ProductPreview() {
   return (
-    <motion.div
-      {...fadeIn}
-      transition={{ ...fadeIn.transition, delay: 0.45 }}
-      className="relative max-w-3xl mx-auto px-6 mt-20"
-    >
-      <div className="absolute -inset-4 bg-gradient-to-br from-teal-200/30 via-emerald-200/20 to-sky-200/30 rounded-[2rem] blur-2xl -z-10" />
-      <div className="rounded-2xl bg-white border border-slate-200 shadow-2xl shadow-slate-900/10 overflow-hidden">
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50/60">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-            <div className="w-2.5 h-2.5 rounded-full bg-slate-300" />
-          </div>
-          <div className="ml-3 text-xs font-medium text-slate-500">
-            Lesson plan · Grade 5 Science
-          </div>
-          <div className="ml-auto flex items-center gap-1.5 text-xs text-teal-600 font-medium">
-            <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-            On-device
-          </div>
+    <div className="rounded-2xl border border-landing-hairline bg-white shadow-[0_16px_40px_rgba(20,34,31,0.08)] overflow-hidden">
+      <div className="flex items-center gap-2 border-b border-landing-hairline bg-landing-canvas/70 px-4 py-3">
+        <div className="flex gap-1.5">
+          <div className="h-2.5 w-2.5 rounded-full bg-landing-hairline" />
+          <div className="h-2.5 w-2.5 rounded-full bg-landing-hairline" />
+          <div className="h-2.5 w-2.5 rounded-full bg-landing-hairline" />
         </div>
-        <div className="p-6 sm:p-8 space-y-5 text-left">
-          <div>
-            <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-1.5">
-              Topic
-            </p>
-            <h3 className="text-lg sm:text-xl font-bold text-slate-900">
-              Photosynthesis: how plants make their own food
-            </h3>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-2">
-              Learning objectives
-            </p>
-            <ul className="space-y-1.5 text-sm text-slate-700">
-              <li className="flex gap-2">
-                <span className="text-teal-500 mt-1">•</span>
-                Identify the role of sunlight, water, and air in plant growth.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-teal-500 mt-1">•</span>
-                Explain why plants need leaves and roots.
-              </li>
-              <li className="flex gap-2">
-                <span className="text-teal-500 mt-1">•</span>
-                Predict what happens when a plant is kept in the dark.
-              </li>
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-2">
-              Classroom activity
-            </p>
-            <p className="text-sm text-slate-700 leading-relaxed">
-              Place two bean seedlings in jars — one near a sunny window, the
-              other inside a covered box. Have learners observe and sketch
-              them daily for a week, then discuss what they noticed.
-            </p>
-          </div>
-          <div className="pt-2 flex items-center justify-between text-xs text-slate-400 border-t border-slate-100">
-            <span>Generated in 4.2s · 0 cloud calls</span>
-            <span className="flex items-center gap-1">
-              <Cpu size={12} /> Gemma running locally
-            </span>
-          </div>
+        <div className="ml-3 text-xs font-medium text-landing-muted">
+          Lesson plan · Grade 5 Science
+        </div>
+        <div className="ml-auto flex items-center gap-1.5 text-xs font-medium text-landing-brand">
+          <span className="h-1.5 w-1.5 rounded-full bg-landing-brand animate-pulse" />
+          On-device
         </div>
       </div>
-    </motion.div>
+      <div className="space-y-5 p-6 text-left sm:p-8">
+        <div>
+          <p className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-landing-brand">
+            Topic
+          </p>
+          <h3 className="text-lg font-bold text-landing-ink sm:text-xl">
+            Photosynthesis: how plants make their own food
+          </h3>
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-landing-brand">
+            Learning objectives
+          </p>
+          <ul className="space-y-1.5 text-sm text-landing-ink/80">
+            <li className="flex gap-2">
+              <span className="mt-1 text-landing-brand">•</span>
+              Identify the role of sunlight, water, and air in plant growth.
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-1 text-landing-brand">•</span>
+              Explain why plants need leaves and roots.
+            </li>
+            <li className="flex gap-2">
+              <span className="mt-1 text-landing-brand">•</span>
+              Predict what happens when a plant is kept in the dark.
+            </li>
+          </ul>
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-landing-brand">
+            Classroom activity
+          </p>
+          <p className="text-sm leading-relaxed text-landing-muted">
+            Place two bean seedlings in jars — one near a sunny window, the other inside a covered
+            box. Have learners observe and sketch them daily for a week, then discuss what they
+            noticed.
+          </p>
+        </div>
+        <div className="flex items-center justify-between border-t border-landing-hairline pt-2 text-xs text-landing-muted">
+          <span>Generated in 4.2s · 0 cloud calls</span>
+          <span className="flex items-center gap-1">
+            <Cpu size={12} /> Gemma running locally
+          </span>
+        </div>
+      </div>
+    </div>
   )
 }
 
-const differentiators = [
-  {
-    icon: WifiOff,
-    title: 'Works completely offline',
-    body: 'Once the AI is downloaded, plan a full term of lessons with no internet at all. Useful when the WiFi at school is patchy — or absent.',
-    accent: 'from-teal-500 to-teal-600',
-  },
-  {
-    icon: ShieldCheck,
-    title: 'Your students stay private',
-    body: "Everything you type — student names, school details, lesson notes — never leaves your device. Nothing is sent to a server. There's no server.",
-    accent: 'from-indigo-500 to-indigo-600',
-  },
-  {
-    icon: HeartHandshake,
-    title: 'Free, with no asterisks',
-    body: 'No subscriptions, no API costs, no usage limits, no ads. Built as a public good for African educators and released under the MIT license.',
-    accent: 'from-emerald-500 to-emerald-600',
-  },
-] as const
-
-function Differentiators() {
+function TrustStrip() {
+  const chips = ['Works offline', 'No account', 'MIT licensed', 'Powered by Gemma'] as const
   return (
-    <section id="features" className="relative py-20 sm:py-28 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
-        <motion.div {...fadeIn} className="max-w-2xl">
-          <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-3">
-            Built differently
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight text-balance">
-            Most AI tools assume cheap data and fast WiFi. We don&apos;t.
-          </h2>
-        </motion.div>
-
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {differentiators.map(({ icon: Icon, title, body, accent }, i) => (
-            <motion.div
-              key={title}
-              {...fadeIn}
-              transition={{ ...fadeIn.transition, delay: i * 0.08 }}
-              className="group relative p-6 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 hover:-translate-y-1 transition-all"
+    <section className="border-y border-landing-hairline bg-white">
+      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
+        <p className="text-sm font-semibold text-landing-ink">
+          Built for classrooms without reliable WiFi
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {chips.map((chip) => (
+            <span
+              key={chip}
+              className="rounded-full border border-landing-hairline bg-landing-canvas px-3 py-1 text-xs font-semibold text-landing-muted"
             >
-              <div
-                className={`w-11 h-11 rounded-xl bg-gradient-to-br ${accent} flex items-center justify-center shadow-sm mb-5`}
-              >
-                <Icon size={20} className="text-white" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-2">{title}</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{body}</p>
-            </motion.div>
+              {chip}
+            </span>
           ))}
         </div>
       </div>
     </section>
+  )
+}
+
+function Chapter({
+  id,
+  eyebrow,
+  title,
+  body,
+  points,
+  icon: Icon,
+  tone = 'white',
+}: {
+  id?: string
+  eyebrow: string
+  title: string
+  body: string
+  points: readonly string[]
+  icon: typeof WifiOff
+  tone?: 'white' | 'canvas'
+}) {
+  return (
+    <section
+      id={id}
+      className={`relative py-16 sm:py-24 ${tone === 'canvas' ? 'bg-landing-canvas' : 'bg-white'}`}
+    >
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <motion.div {...fadeIn} className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start lg:gap-16">
+          <div className="max-w-2xl">
+            <Eyebrow>{eyebrow}</Eyebrow>
+            <h2 className="text-3xl font-bold tracking-tight text-balance text-landing-ink sm:text-4xl">
+              {title}
+            </h2>
+            <p className="mt-4 text-[15px] leading-7 text-landing-muted sm:text-base">{body}</p>
+            <ul className="mt-6 space-y-3">
+              {points.map((point) => (
+                <li key={point} className="flex gap-3 text-sm text-landing-ink/85">
+                  <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-landing-brand" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex h-full min-h-[180px] items-center justify-center rounded-2xl border border-landing-hairline bg-white p-10 shadow-[0_8px_24px_rgba(20,34,31,0.04)]">
+            <div className="grid h-16 w-16 place-items-center rounded-2xl border border-landing-hairline bg-landing-brand/8 text-landing-brand">
+              <Icon size={28} />
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+function Differentiators() {
+  return (
+    <>
+      <Chapter
+        id="features"
+        eyebrow="Offline first"
+        title="Most AI tools assume cheap data and fast WiFi. We don't."
+        body="Once the AI is downloaded, plan a full term of lessons with no internet at all. Useful when the WiFi at school is patchy — or absent."
+        points={[
+          'One-time ~1.9 GB model download over WiFi',
+          'Then schemes, lessons, and tests run fully offline',
+          'Resumable download if the connection drops',
+        ]}
+        icon={WifiOff}
+        tone="white"
+      />
+      <Chapter
+        eyebrow="Private by design"
+        title="Your students stay on your device."
+        body="Everything you type — student names, school details, lesson notes — never leaves your phone. There's no account and no inference server."
+        points={[
+          'On-device Gemma via WebAssembly',
+          'No cloud API calls after the model is cached',
+          'MIT licensed so ministries can audit and fork',
+        ]}
+        icon={ShieldCheck}
+        tone="canvas"
+      />
+    </>
   )
 }
 
@@ -371,31 +401,29 @@ const useCases = [
 
 function UseCases() {
   return (
-    <section className="relative py-20 sm:py-28 bg-slate-50">
-      <div className="max-w-6xl mx-auto px-6">
-        <motion.div {...fadeIn} className="max-w-2xl mb-14">
-          <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-3">
-            What you can create
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight text-balance">
+    <section className="relative bg-white py-16 sm:py-24">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <motion.div {...fadeIn} className="max-w-2xl">
+          <Eyebrow>What you can create</Eyebrow>
+          <h2 className="text-3xl font-bold tracking-tight text-balance text-landing-ink sm:text-4xl">
             Four kinds of teaching material, generated in seconds.
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
           {useCases.map(({ icon: Icon, label, body }, i) => (
             <motion.div
               key={label}
               {...fadeIn}
-              transition={{ ...fadeIn.transition, delay: i * 0.06 }}
-              className="group flex gap-4 p-6 rounded-2xl bg-white border border-slate-200 hover:border-teal-200 hover:shadow-lg hover:shadow-slate-200/50 transition-all"
+              transition={{ ...fadeIn.transition, delay: i * 0.05 }}
+              className="flex gap-4 rounded-2xl border border-landing-hairline bg-landing-canvas/50 p-6"
             >
-              <div className="shrink-0 w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
+              <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-landing-hairline bg-white text-landing-brand">
                 <Icon size={22} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-900 mb-1">{label}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{body}</p>
+                <h3 className="mb-1 font-bold text-landing-ink">{label}</h3>
+                <p className="text-sm leading-relaxed text-landing-muted">{body}</p>
               </div>
             </motion.div>
           ))}
@@ -412,7 +440,7 @@ const steps = [
   },
   {
     title: 'Tell the AI about your class',
-    body: "Subject, grade, topic, and how long the lesson should run. That\u2019s it.",
+    body: "Subject, grade, topic, and how long the lesson should run. That's it.",
   },
   {
     title: 'Get a complete plan',
@@ -422,30 +450,28 @@ const steps = [
 
 function HowItWorks() {
   return (
-    <section id="how" className="relative py-20 sm:py-28 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
-        <motion.div {...fadeIn} className="max-w-2xl mb-14">
-          <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-3">
-            How it works
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight text-balance">
+    <section id="how" className="relative bg-landing-canvas py-16 sm:py-24">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <motion.div {...fadeIn} className="mb-14 max-w-2xl">
+          <Eyebrow>How it works</Eyebrow>
+          <h2 className="text-3xl font-bold tracking-tight text-balance text-landing-ink sm:text-4xl">
             Three steps from cold start to a complete lesson plan.
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {steps.map(({ title, body }, i) => (
             <motion.div
               key={title}
               {...fadeIn}
-              transition={{ ...fadeIn.transition, delay: i * 0.08 }}
-              className="relative"
+              transition={{ ...fadeIn.transition, delay: i * 0.06 }}
+              className="rounded-2xl border border-landing-hairline bg-white p-6"
             >
-              <div className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-br from-teal-500 to-teal-600 mb-4">
+              <div className="mb-4 text-4xl font-bold text-landing-brand">
                 {String(i + 1).padStart(2, '0')}
               </div>
-              <h3 className="font-bold text-slate-900 mb-2">{title}</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{body}</p>
+              <h3 className="mb-2 font-bold text-landing-ink">{title}</h3>
+              <p className="text-sm leading-relaxed text-landing-muted">{body}</p>
             </motion.div>
           ))}
         </div>
@@ -464,9 +490,9 @@ function OpenSourceStat({
   value: string
 }) {
   return (
-    <div className="p-5 rounded-2xl bg-white/5 border border-white/10">
-      <Icon size={18} className="text-teal-400 mb-3" />
-      <div className="text-xs text-slate-400 mb-0.5">{label}</div>
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+      <Icon size={18} className="mb-3 text-landing-brand" />
+      <div className="mb-0.5 text-xs text-slate-400">{label}</div>
       <div className="font-bold text-white">{value}</div>
     </div>
   )
@@ -474,32 +500,30 @@ function OpenSourceStat({
 
 function OpenSourceSection() {
   return (
-    <section id="open-source" className="relative py-20 sm:py-28 bg-slate-900 overflow-hidden">
+    <section id="open-source" className="relative overflow-hidden bg-landing-ink py-16 sm:py-24">
       <div aria-hidden className="absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(20,184,166,0.18),transparent_50%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(16,185,129,0.12),transparent_50%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(12,140,126,0.18),transparent_50%)]" />
       </div>
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-5">
           <div className="lg:col-span-3">
-            <p className="text-xs uppercase tracking-widest font-semibold text-teal-400 mb-3">
+            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5eead4]">
               Open source
             </p>
-            <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight text-balance mb-5">
+            <h2 className="mb-5 text-3xl font-bold tracking-tight text-balance text-white sm:text-4xl">
               Built in the open. Audit the code, fork it, ship it.
             </h2>
-            <p className="text-slate-300 leading-relaxed mb-8 max-w-xl">
-              Every line of KaratuAI is on GitHub under the MIT license. If a
-              ministry of education wants to deploy a branded version for their
-              country, the path is clone, customize, ship — no licensing calls,
-              no procurement.
+            <p className="mb-8 max-w-xl leading-relaxed text-white/70">
+              Every line of KaratuAI is on GitHub under the MIT license. If a ministry of education
+              wants to deploy a branded version for their country, the path is clone, customize,
+              ship — no licensing calls, no procurement.
             </p>
             <div className="flex flex-wrap gap-3">
               <a
                 href={GITHUB_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="group inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-colors"
+                className="group inline-flex items-center gap-2 rounded-[12px] bg-white px-5 py-3 font-semibold text-landing-ink transition-colors hover:bg-landing-canvas"
               >
                 <GithubIcon size={18} />
                 <span>View on GitHub</span>
@@ -512,7 +536,7 @@ function OpenSourceSection() {
                 href={`${GITHUB_URL}/issues`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white/10 text-white font-semibold border border-white/20 hover:bg-white/20 transition-colors"
+                className="inline-flex items-center gap-2 rounded-[12px] border border-white/20 bg-white/10 px-5 py-3 font-semibold text-white transition-colors hover:bg-white/20"
               >
                 <Code size={18} />
                 <span>Report an issue</span>
@@ -539,94 +563,81 @@ const sponsorTiers = [
     name: 'Friend',
     pitch: 'Cover server bandwidth for a few teachers',
     body: 'Help offset the cost of hosting the AI model and serving it to teachers in low-bandwidth regions.',
-    accent: 'from-teal-50 to-white',
-    border: 'border-teal-100',
-    iconBg: 'bg-teal-100 text-teal-700',
   },
   {
     icon: School,
     name: 'School patron',
     pitch: 'Fund a feature your teachers need',
     body: 'Sponsor a specific capability — a new subject pack, a local-language interface, or a custom curriculum import.',
-    accent: 'from-emerald-50 to-white',
-    border: 'border-emerald-100',
-    iconBg: 'bg-emerald-100 text-emerald-700',
   },
   {
     icon: Building2,
     name: 'Partner',
     pitch: 'Deploy a branded version country-wide',
     body: 'Ministries, NGOs, and foundations: we will work with you to ship a localized build at the scale you need.',
-    accent: 'from-indigo-50 to-white',
-    border: 'border-indigo-100',
-    iconBg: 'bg-indigo-100 text-indigo-700',
   },
 ] as const
 
 function SponsorshipSection() {
   return (
-    <section id="sponsor" className="relative py-20 sm:py-28 bg-white">
-      <div className="max-w-6xl mx-auto px-6">
+    <section id="sponsor" className="relative bg-white py-16 sm:py-24">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
         <motion.div {...fadeIn} className="max-w-2xl">
-          <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-3">
-            Sponsorship
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight text-balance">
+          <Eyebrow>Sponsorship</Eyebrow>
+          <h2 className="text-3xl font-bold tracking-tight text-balance text-landing-ink sm:text-4xl">
             Help keep KaratuAI free for every teacher.
           </h2>
-          <p className="mt-4 text-slate-600 leading-relaxed">
-            KaratuAI is built as a public good — no subscriptions, no ads, no
-            data harvesting. Sponsorships pay for the bandwidth that delivers
-            the AI to teachers, and the engineering time that keeps it
-            improving.
+          <p className="mt-4 leading-relaxed text-landing-muted">
+            KaratuAI is built as a public good — no subscriptions, no ads, no data harvesting.
+            Sponsorships pay for the bandwidth that delivers the AI to teachers, and the
+            engineering time that keeps it improving.
           </p>
         </motion.div>
 
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-3 gap-5">
-          {sponsorTiers.map(({ icon: Icon, name, pitch, body, accent, border, iconBg }, i) => (
+        <div className="mt-14 grid grid-cols-1 gap-5 md:grid-cols-3">
+          {sponsorTiers.map(({ icon: Icon, name, pitch, body }, i) => (
             <motion.div
               key={name}
               {...fadeIn}
-              transition={{ ...fadeIn.transition, delay: i * 0.08 }}
-              className={`relative p-6 rounded-2xl bg-gradient-to-br ${accent} border ${border} hover:-translate-y-1 transition-all`}
+              transition={{ ...fadeIn.transition, delay: i * 0.06 }}
+              className="rounded-2xl border border-landing-hairline bg-landing-canvas/40 p-6"
             >
-              <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center mb-5`}>
+              <div className="mb-5 grid h-11 w-11 place-items-center rounded-xl border border-landing-hairline bg-white text-landing-brand">
                 <Icon size={20} />
               </div>
-              <p className="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-1">
+              <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-landing-muted">
                 {name}
               </p>
-              <h3 className="font-bold text-slate-900 mb-2 text-balance">{pitch}</h3>
-              <p className="text-sm text-slate-600 leading-relaxed">{body}</p>
+              <h3 className="mb-2 font-bold text-balance text-landing-ink">{pitch}</h3>
+              <p className="text-sm leading-relaxed text-landing-muted">{body}</p>
             </motion.div>
           ))}
         </div>
 
         <motion.div
           {...fadeIn}
-          transition={{ ...fadeIn.transition, delay: 0.25 }}
-          className="mt-12 p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 text-white overflow-hidden relative"
+          transition={{ ...fadeIn.transition, delay: 0.2 }}
+          className="relative mt-12 overflow-hidden rounded-3xl bg-landing-ink p-8 text-white sm:p-10"
         >
-          <div aria-hidden className="absolute inset-0 -z-0">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(20,184,166,0.18),transparent_55%)]" />
+          <div aria-hidden className="absolute inset-0">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(12,140,126,0.18),transparent_55%)]" />
           </div>
-          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+          <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="max-w-xl">
-              <p className="text-xs uppercase tracking-widest font-semibold text-teal-400 mb-2">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5eead4]">
                 Get in touch
               </p>
-              <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight text-balance mb-3">
+              <h3 className="mb-3 text-2xl font-bold tracking-tight text-balance text-white sm:text-3xl">
                 Want to sponsor or partner with us?
               </h3>
-              <p className="text-slate-300 leading-relaxed">
-                Tell us about your school, ministry, or foundation. We will
-                reply within two working days with what is possible and how we
-                would structure it.
+              <p className="leading-relaxed text-white/70">
+                Tell us about your school, ministry, or foundation. We will reply within two
+                working days with what is possible and how we would structure it.
               </p>
             </div>
             <a
               href={`mailto:${CONTACT_EMAIL}?subject=KaratuAI%20sponsorship%20enquiry`}
-              className="group inline-flex items-center justify-center gap-2 shrink-0 px-6 py-3.5 rounded-xl bg-white text-slate-900 font-semibold hover:bg-slate-100 transition-colors"
+              className="group inline-flex shrink-0 items-center justify-center gap-2 rounded-[12px] bg-white px-6 py-3.5 font-semibold text-landing-ink transition-colors hover:bg-landing-canvas"
             >
               <Mail size={18} />
               <span>{CONTACT_EMAIL}</span>
@@ -670,15 +681,15 @@ function AndroidDownloadCard({ onDownload }: { onDownload: () => void }) {
     <a
       href={ANDROID_APK_URL}
       onClick={onDownload}
-      className="group flex items-center justify-between gap-4 w-full px-5 py-4 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-semibold shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40 transition-all"
+      className="group flex w-full items-center justify-between gap-4 rounded-2xl bg-landing-brand px-5 py-4 font-semibold text-white shadow-[0_10px_24px_rgba(12,140,126,0.2)] transition hover:bg-landing-brand-hover"
     >
       <div className="flex items-center gap-3">
-        <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
+        <div className="grid h-11 w-11 place-items-center rounded-xl bg-white/20">
           <Download size={20} />
         </div>
         <div className="text-left">
           <div>Download for Android</div>
-          <div className="text-xs font-normal text-emerald-50">
+          <div className="text-xs font-normal text-white/80">
             v{ANDROID_APK_VERSION} · {ANDROID_APK_SIZE} APK
           </div>
         </div>
@@ -699,22 +710,22 @@ function InstallStepsPanel({ visible }: { visible: boolean }) {
           transition={{ duration: 0.25 }}
           className="overflow-hidden"
         >
-          <div className="mt-4 p-5 rounded-2xl bg-emerald-50/60 border border-emerald-100">
-            <p className="text-xs font-semibold text-emerald-700 uppercase tracking-wide mb-4">
+          <div className="mt-4 rounded-2xl border border-landing-brand/20 bg-landing-brand/5 p-5">
+            <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-landing-brand">
               What happens next
             </p>
             <ol className="space-y-4">
               {installSteps.map(({ icon: Icon, title, body }, i) => (
                 <li key={title} className="flex gap-3">
-                  <div className="w-8 h-8 shrink-0 rounded-full bg-white text-emerald-600 flex items-center justify-center text-sm font-bold border border-emerald-200">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-landing-brand/25 bg-white text-sm font-bold text-landing-brand">
                     {i + 1}
                   </div>
                   <div className="flex-1 pt-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <Icon size={14} className="text-emerald-600" />
-                      <p className="text-sm font-semibold text-slate-800">{title}</p>
+                    <div className="mb-0.5 flex items-center gap-2">
+                      <Icon size={14} className="text-landing-brand" />
+                      <p className="text-sm font-semibold text-landing-ink">{title}</p>
                     </div>
-                    <p className="text-sm text-slate-600 leading-relaxed">{body}</p>
+                    <p className="text-sm leading-relaxed text-landing-muted">{body}</p>
                   </div>
                 </li>
               ))}
@@ -728,18 +739,18 @@ function InstallStepsPanel({ visible }: { visible: boolean }) {
 
 function DesktopAndroidCard() {
   return (
-    <div className="flex gap-4 p-5 rounded-2xl bg-white border border-emerald-100">
-      <div className="shrink-0 p-2.5 bg-white rounded-xl border border-emerald-200">
+    <div className="flex gap-4 rounded-2xl border border-landing-hairline bg-white p-5">
+      <div className="shrink-0 rounded-xl border border-landing-hairline bg-white p-2.5">
         <QRCodeSVG value={ANDROID_APK_URL} size={96} level="M" marginSize={0} />
       </div>
-      <div className="min-w-0 flex flex-col justify-center">
-        <div className="flex items-center gap-1.5 text-emerald-700 font-semibold mb-1">
+      <div className="flex min-w-0 flex-col justify-center">
+        <div className="mb-1 flex items-center gap-1.5 font-semibold text-landing-brand">
           <Download size={16} />
           <span className="text-sm">Android · v{ANDROID_APK_VERSION}</span>
         </div>
-        <p className="text-xs text-slate-600 leading-relaxed">
-          Point your Android phone&apos;s camera at this code to download the
-          APK ({ANDROID_APK_SIZE}).
+        <p className="text-xs leading-relaxed text-landing-muted">
+          Point your Android phone&apos;s camera at this code to download the APK ({ANDROID_APK_SIZE}
+          ).
         </p>
       </div>
     </div>
@@ -748,14 +759,13 @@ function DesktopAndroidCard() {
 
 function IPhoneNote() {
   return (
-    <div className="flex items-start gap-3 p-5 rounded-2xl bg-amber-50 border border-amber-100 text-amber-900">
-      <Smartphone size={18} className="shrink-0 mt-0.5" />
+    <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-900">
+      <Smartphone size={18} className="mt-0.5 shrink-0" />
       <div>
-        <p className="font-semibold text-sm mb-0.5">iPhone app coming soon</p>
+        <p className="mb-0.5 text-sm font-semibold">iPhone app coming soon</p>
         <p className="text-xs leading-relaxed text-amber-800">
-          On-device AI does not fit in iPhone browsers yet. Use a laptop or an
-          Android phone today — we will announce the iPhone app the moment it
-          is ready.
+          On-device AI does not fit in iPhone browsers yet. Use a laptop or an Android phone today —
+          we will announce the iPhone app the moment it is ready.
         </p>
       </div>
     </div>
@@ -773,42 +783,37 @@ function DownloadSection({
 }) {
   const showWeb = device !== 'ios'
   return (
-    <section
-      id="download"
-      className="relative py-20 sm:py-28 bg-gradient-to-br from-teal-50 via-white to-emerald-50"
-    >
-      <div className="max-w-3xl mx-auto px-6">
-        <motion.div {...fadeIn} className="text-center mb-12">
-          <p className="text-xs uppercase tracking-widest font-semibold text-teal-600 mb-3">
-            Get started
-          </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight text-balance">
+    <section id="download" className="relative bg-landing-canvas py-16 sm:py-24">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+        <motion.div {...fadeIn} className="mb-12 text-center">
+          <Eyebrow>Get started</Eyebrow>
+          <h2 className="text-3xl font-bold tracking-tight text-balance text-landing-ink sm:text-4xl">
             Ready to plan your next lesson?
           </h2>
-          <p className="mt-4 text-slate-600 leading-relaxed">
-            Choose how you want to use KaratuAI. The AI download happens once,
-            then everything runs offline.
+          <p className="mt-4 leading-relaxed text-landing-muted">
+            Choose how you want to use KaratuAI. The AI download happens once, then everything runs
+            offline.
           </p>
         </motion.div>
 
         <motion.div
           {...fadeIn}
-          transition={{ ...fadeIn.transition, delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-6 sm:p-8"
+          transition={{ ...fadeIn.transition, delay: 0.08 }}
+          className="rounded-3xl border border-landing-hairline bg-white p-6 shadow-[0_16px_40px_rgba(20,34,31,0.06)] sm:p-8"
         >
           {showWeb && (
             <div className="mb-5">
               <Link
                 to="/curriculum"
-                className="group flex items-center justify-between gap-4 w-full px-5 py-4 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-600 text-white font-semibold shadow-lg shadow-teal-500/30 hover:shadow-xl hover:shadow-teal-500/40 transition-all"
+                className="group flex w-full items-center justify-between gap-4 rounded-2xl bg-landing-brand px-5 py-4 font-semibold text-white shadow-[0_10px_24px_rgba(12,140,126,0.2)] transition hover:bg-landing-brand-hover"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center">
+                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-white/20">
                     <Globe size={20} />
                   </div>
                   <div className="text-left">
                     <div>Use in your browser</div>
-                    <div className="text-xs font-normal text-teal-50">
+                    <div className="text-xs font-normal text-white/80">
                       No install · Works on laptops and Android
                     </div>
                   </div>
@@ -827,7 +832,7 @@ function DownloadSection({
 
           {device === 'desktop' && (
             <div className="space-y-3">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">
+              <p className="pt-2 text-xs font-semibold uppercase tracking-wide text-landing-muted">
                 Or get the mobile app
               </p>
               <DesktopAndroidCard />
@@ -844,58 +849,57 @@ function DownloadSection({
 
 function Footer() {
   return (
-    <footer className="bg-white border-t border-slate-200">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+    <footer className="border-t border-landing-hairline bg-white">
+      <div className="mx-auto max-w-[1280px] px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mb-10 grid grid-cols-2 gap-8 md:grid-cols-5">
           <div className="col-span-2">
-            <Link to="/" className="flex items-center gap-2.5 mb-4">
+            <Link to="/" className="mb-4 flex items-center gap-2.5">
               <Logo size={32} />
-              <span className="font-bold text-slate-900 tracking-tight">KaratuAI</span>
+              <span className="font-bold tracking-tight text-landing-ink">KaratuAI</span>
             </Link>
-            <p className="text-sm text-slate-600 max-w-sm leading-relaxed">
-              On-device AI that helps African teachers plan lessons, design
-              activities, and write assessments — without internet, without
-              giving up student privacy.
+            <p className="max-w-sm text-sm leading-relaxed text-landing-muted">
+              On-device AI that helps African teachers plan lessons, design activities, and write
+              assessments — without internet, without giving up student privacy.
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-4">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-landing-muted">
               Product
             </p>
-            <ul className="space-y-2.5 text-sm text-slate-600">
+            <ul className="space-y-2.5 text-sm text-landing-muted">
               <li>
-                <a href="#features" className="hover:text-slate-900 transition-colors">
+                <a href="#features" className="transition-colors hover:text-landing-ink">
                   Features
                 </a>
               </li>
               <li>
-                <a href="#how" className="hover:text-slate-900 transition-colors">
+                <a href="#how" className="transition-colors hover:text-landing-ink">
                   How it works
                 </a>
               </li>
               <li>
-                <a href="#download" className="hover:text-slate-900 transition-colors">
+                <a href="#download" className="transition-colors hover:text-landing-ink">
                   Download
                 </a>
               </li>
               <li>
-                <Link to="/curriculum" className="hover:text-slate-900 transition-colors">
+                <Link to="/curriculum" className="transition-colors hover:text-landing-ink">
                   Open the app
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-4">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-landing-muted">
               Open source
             </p>
-            <ul className="space-y-2.5 text-sm text-slate-600">
+            <ul className="space-y-2.5 text-sm text-landing-muted">
               <li>
                 <a
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 transition-colors"
+                  className="transition-colors hover:text-landing-ink"
                 >
                   GitHub repository
                 </a>
@@ -905,7 +909,7 @@ function Footer() {
                   href={`${GITHUB_URL}/issues`}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 transition-colors"
+                  className="transition-colors hover:text-landing-ink"
                 >
                   Report an issue
                 </a>
@@ -915,7 +919,7 @@ function Footer() {
                   href={`${GITHUB_URL}/blob/main/LICENSE`}
                   target="_blank"
                   rel="noreferrer"
-                  className="hover:text-slate-900 transition-colors"
+                  className="transition-colors hover:text-landing-ink"
                 >
                   MIT license
                 </a>
@@ -923,19 +927,19 @@ function Footer() {
             </ul>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-4">
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-landing-muted">
               Contact
             </p>
-            <ul className="space-y-2.5 text-sm text-slate-600">
+            <ul className="space-y-2.5 text-sm text-landing-muted">
               <li>
-                <a href="#sponsor" className="hover:text-slate-900 transition-colors">
+                <a href="#sponsor" className="transition-colors hover:text-landing-ink">
                   Sponsor us
                 </a>
               </li>
               <li>
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
-                  className="hover:text-slate-900 transition-colors break-all"
+                  className="break-all transition-colors hover:text-landing-ink"
                 >
                   {CONTACT_EMAIL}
                 </a>
@@ -943,7 +947,7 @@ function Footer() {
               <li>
                 <a
                   href={`mailto:${CONTACT_EMAIL}?subject=KaratuAI%20partnership`}
-                  className="hover:text-slate-900 transition-colors"
+                  className="transition-colors hover:text-landing-ink"
                 >
                   Partnerships
                 </a>
@@ -951,7 +955,7 @@ function Footer() {
             </ul>
           </div>
         </div>
-        <div className="pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-landing-hairline pt-8 text-xs text-landing-muted sm:flex-row">
           <p>Built for African teachers. Powered by Gemma running on your device.</p>
           <div className="flex items-center gap-4">
             <span>© {new Date().getFullYear()} KaratuAI</span>
@@ -959,7 +963,7 @@ function Footer() {
               href={GITHUB_URL}
               target="_blank"
               rel="noreferrer"
-              className="hover:text-slate-900 transition-colors"
+              className="transition-colors hover:text-landing-ink"
             >
               <GithubIcon size={14} />
             </a>
@@ -977,9 +981,6 @@ function scrollToDownload() {
 export default function LandingPage() {
   const device = useMemo(() => detectDevice(), [])
   const [stepsRevealed, setStepsRevealed] = useState(false)
-  // Read localStorage once at mount time. Doing this in an effect would cause
-  // a cascading render and the classroom form would briefly flash for users
-  // who already filled it in.
   const [showClassroomForm] = useState(() => !hasInteractedWithClassroomForm())
 
   useEffect(() => {
@@ -990,10 +991,11 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="min-h-screen bg-landing-canvas text-landing-ink">
       <TopNav />
       <main>
         <Hero device={device} onDownloadClick={scrollToDownload} />
+        <TrustStrip />
         <Differentiators />
         <UseCases />
         <HowItWorks />

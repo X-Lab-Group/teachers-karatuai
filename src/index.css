@@ -6,6 +6,14 @@
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
 
+  /* Landing page tokens aligned with karatuai.com marketing. */
+  --color-landing-canvas: #f6f8f7;
+  --color-landing-ink: #14221f;
+  --color-landing-muted: #63716d;
+  --color-landing-hairline: #dde5e2;
+  --color-landing-brand: #0c8c7e;
+  --color-landing-brand-hover: #075f57;
+
   --color-primary: #0C8C7E;
   --color-primary-content: #ffffff;
   --color-secondary: #ec4899;

@@ -95,9 +95,9 @@ function ModalShell({
 
 function InlineShell({ children }: { children: React.ReactNode }) {
   return (
-    <section className="relative py-16 sm:py-20 bg-gradient-to-br from-white via-teal-50/40 to-emerald-50/40">
-      <div className="max-w-3xl mx-auto px-6">
-        <div className="rounded-3xl bg-white border border-slate-200 shadow-xl shadow-slate-200/40 overflow-hidden">
+    <section className="relative bg-white py-16 sm:py-20">
+      <div className="mx-auto max-w-3xl px-6">
+        <div className="overflow-hidden rounded-3xl border border-landing-hairline bg-white shadow-[0_16px_40px_rgba(20,34,31,0.06)]">
           {children}
         </div>
       </div>
