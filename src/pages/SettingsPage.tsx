@@ -4,7 +4,7 @@ import { Settings, Download, CheckCircle, AlertCircle, Globe, Palette, Graduatio
 import { Button, Card, Input, Select } from '../components/ui'
 import { useModel } from '../hooks/useModel'
 import { getSettings, saveSettings } from '../lib/db'
-import { COUNTRY_PRESETS, getCountryPreset } from '../lib/local-context'
+import { COUNTRY_OPTIONS, getCountryPreset } from '../lib/local-context'
 import type { AppSettings, EducationLevel } from '../types'
 import SupportForm from '../components/SupportForm'
 
@@ -30,8 +30,6 @@ const THEMES = [
   { value: 'light', label: 'Light Mode' },
   { value: 'dark', label: 'Dark Mode' },
 ]
-
-const COUNTRY_OPTIONS = COUNTRY_PRESETS.map((c) => ({ value: c.code, label: c.name }))
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings | null>(null)

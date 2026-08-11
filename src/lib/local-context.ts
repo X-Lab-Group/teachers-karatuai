@@ -1,4 +1,5 @@
 import type { LocalContext } from '../types'
+import { ALL_COUNTRIES } from './countries'
 
 export interface CountryPreset {
   code: string
@@ -14,6 +15,7 @@ export interface CountryPreset {
   }
 }
 
+/** Rich local-context packs (curriculum, foods, names). Kept for African markets. */
 export const COUNTRY_PRESETS: CountryPreset[] = [
   {
     code: 'NG',
@@ -198,9 +200,31 @@ export const COUNTRY_PRESETS: CountryPreset[] = [
   },
 ]
 
+const PRESET_BY_CODE = new Map(COUNTRY_PRESETS.map((p) => [p.code, p]))
+
+/** Dropdown options: every ISO country, sorted by English name. */
+export const COUNTRY_OPTIONS: { value: string; label: string }[] = ALL_COUNTRIES.map((c) => ({
+  value: c.code,
+  label: PRESET_BY_CODE.get(c.code)?.name ?? c.name,
+}))
+
+function basicPreset(code: string, name: string): CountryPreset {
+  return {
+    code,
+    name,
+    currency: { code: '', symbol: '', name: 'local currency' },
+    commonLanguages: [],
+    examples: { foods: [], names: [], landmarks: [] },
+  }
+}
+
 export function getCountryPreset(code?: string): CountryPreset | undefined {
   if (!code) return undefined
-  return COUNTRY_PRESETS.find((p) => p.code === code)
+  const rich = PRESET_BY_CODE.get(code)
+  if (rich) return rich
+  const base = ALL_COUNTRIES.find((c) => c.code === code)
+  if (!base) return undefined
+  return basicPreset(base.code, base.name)
 }
 
 export function extractLocalContext(settings: {
@@ -223,27 +247,48 @@ export function buildLocalContextSection(ctx?: LocalContext): string {
   const lines: string[] = ['LOCAL CONTEXT (use these in all examples):']
   lines.push(`- Country: ${preset.name}`)
   if (ctx.region) lines.push(`- Region: ${ctx.region}`)
-  lines.push(
-    `- Currency: ${preset.currency.name} (${preset.currency.symbol}, ${preset.currency.code}) — use ${preset.currency.name} for any money examples`
-  )
+
+  if (preset.currency.code) {
+    lines.push(
+      `- Currency: ${preset.currency.name} (${preset.currency.symbol}, ${preset.currency.code}) — use ${preset.currency.name} for any money examples`,
+    )
+  } else {
+    lines.push(
+      `- Currency: use the local currency of ${preset.name} for any money examples (do not default to USD or EUR unless that is truly local)`,
+    )
+  }
+
   if (ctx.localLanguage) {
     lines.push(
-      `- Local language: ${ctx.localLanguage} — you may include key ${ctx.localLanguage} terms in parentheses for clarity`
+      `- Local language: ${ctx.localLanguage} — you may include key ${ctx.localLanguage} terms in parentheses for clarity`,
     )
   }
   if (preset.examBoards?.length) {
     lines.push(
-      `- National exams: ${preset.examBoards.join(', ')} — match question style to these where relevant`
+      `- National exams: ${preset.examBoards.join(', ')} — match question style to these where relevant`,
     )
   }
   if (preset.curriculumBody) {
     lines.push(`- Curriculum body: ${preset.curriculumBody}`)
   }
-  lines.push(`- Familiar foods to reference: ${preset.examples.foods.join(', ')}`)
-  lines.push(`- Names to use for student/character examples: ${preset.examples.names.join(', ')}`)
-  lines.push(`- Settings/landmarks: ${preset.examples.landmarks.join(', ')}`)
+  if (preset.examples.foods.length) {
+    lines.push(`- Familiar foods to reference: ${preset.examples.foods.join(', ')}`)
+  }
+  if (preset.examples.names.length) {
+    lines.push(
+      `- Names to use for student/character examples: ${preset.examples.names.join(', ')}`,
+    )
+  }
+  if (preset.examples.landmarks.length) {
+    lines.push(`- Settings/landmarks: ${preset.examples.landmarks.join(', ')}`)
+  }
+  if (!preset.examples.foods.length) {
+    lines.push(
+      `- Use culturally appropriate local foods, names, and everyday settings for ${preset.name}`,
+    )
+  }
   lines.push(
-    '- Avoid Western-only references (no pizza, dollars, snow, dishwashers, school buses, etc.) unless specifically relevant.'
+    '- Avoid Western-only references (no pizza, dollars, snow, dishwashers, school buses, etc.) unless specifically relevant to this country.',
   )
 
   return lines.join('\n')
