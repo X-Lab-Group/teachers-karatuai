@@ -9,11 +9,14 @@ export type ModelStatus =
   | 'error'
   | 'unsupported'
 
+export type ModelBackend = 'cloud' | 'offline' | 'none'
+
 export interface ModelStatusValue {
   status: ModelStatus
   progress: number
   error: string | null
   isReady: boolean
+  backend: ModelBackend
 }
 
 export interface ModelActionsValue {

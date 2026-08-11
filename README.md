@@ -10,7 +10,7 @@
 KaratuAI helps African teachers generate **schemes of work, lesson plans, classroom activities, and assessments** — entirely offline, on whatever device they already own. The AI runs locally in the browser via WebAssembly, so nothing teachers type ever leaves their device.
 
 - **Live app:** <https://teachers.karatuai.com>
-- **Status:** v1.0 (Web + Android). iPhone app on the roadmap.
+- **Status:** v1.0 (Web + Android). Browser can use live Gemini when online; on-device Gemma remains the offline path. iPhone works in the browser when cloud AI is configured.
 
 ---
 
@@ -43,7 +43,27 @@ Generative AI tools are useful for lesson planning, but the dominant ones (ChatG
 
 ### On-device inference
 
-KaratuAI uses Google's [Gemma](https://ai.google.dev/gemma) model (`gemma-4-E2B-it-web.task`, ~1.87 GB) executed via [MediaPipe Tasks GenAI](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference) compiled to WebAssembly. The model runs in the user's browser tab — there is no inference server.
+KaratuAI uses Google's [Gemma](https://ai.google.dev/gemma) model (`gemma-4-E2B-it-web.task`, ~1.87 GB) executed via [MediaPipe Tasks GenAI](https://ai.google.dev/edge/mediapipe/solutions/genai/llm_inference) compiled to WebAssembly. The model runs in the user's browser tab — there is no inference server for the offline path.
+
+### Live Gemini (online browser)
+
+When `VITE_GENERATE_ENDPOINT` is set and the device is online, `ModelProvider` prefers a Cloud Function proxy (`functions/generate`) that calls Gemini Flash with a server-side `GEMINI_API_KEY`. The ~1.9 GB Gemma download is skipped. If the probe fails or the user is offline, the app falls back to on-device Gemma (desktop/Android). iPhone browsers work when the cloud path is available.
+
+```bash
+# 1. Store the key in Secret Manager (example secret name: gemini-api-key)
+# 2. Deploy the proxy
+gcloud functions deploy karatuai-generate \
+  --gen2 --runtime=nodejs22 --region=us-central1 \
+  --project=dolly-party-hrms \
+  --source=functions/generate --entry-point=generate \
+  --trigger-http --allow-unauthenticated \
+  --set-secrets=GEMINI_API_KEY=gemini-api-key:latest \
+  --set-env-vars=GEMINI_MODEL=gemini-2.5-flash
+
+# 3. Rebuild the web app with the function URL
+export VITE_GENERATE_ENDPOINT="https://REGION-PROJECT.cloudfunctions.net/karatuai-generate"
+./deploy.sh
+```
 
 ### Chunked model download
 
@@ -69,8 +89,8 @@ When MediaPipe asks for the model, the service worker in [`public/sw.js`](./publ
 | Styling          | Tailwind CSS 4 + DaisyUI 5                                 |
 | Routing          | React Router 7                                             |
 | Animation        | Framer Motion 12                                           |
-| AI runtime       | MediaPipe Tasks GenAI (`@mediapipe/tasks-genai`) + WebAssembly |
-| Model            | Gemma 3 (E2B), `.task` format, ~1.87 GB                    |
+| AI runtime       | MediaPipe Tasks GenAI + optional Gemini cloud proxy        |
+| Model            | Gemma on-device (~1.87 GB) / Gemini Flash online            |
 | Persistent cache | Cache Storage API + IndexedDB (Dexie.js)                   |
 | Native shell     | Capacitor 8 (Android, iOS pending)                         |
 | Hosting          | Google Cloud Run (nginx + static assets)                   |

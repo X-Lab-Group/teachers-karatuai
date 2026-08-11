@@ -12,8 +12,10 @@ const LOGO_HOVER = { scale: 1.1, rotate: 5 }
 const ICON_HOVER = { scale: 1.1 }
 
 function ModelStatusBadge() {
-  const { status, progress, isReady } = useModelStatus()
+  const { status, progress, isReady, backend } = useModelStatus()
   const isDownloading = status === 'downloading'
+  const readyLabel =
+    backend === 'cloud' ? 'Cloud AI ready' : backend === 'offline' ? 'On-device AI ready' : 'AI Ready'
 
   if (isDownloading) {
     return (
@@ -30,7 +32,7 @@ function ModelStatusBadge() {
       className={`p-2 rounded-full ${
         isReady ? 'bg-teal-50 text-teal-500' : 'bg-slate-100 text-slate-400'
       }`}
-      title={isReady ? 'AI Ready' : 'AI Not Ready'}
+      title={isReady ? readyLabel : 'AI Not Ready'}
     >
       <Cpu size={18} />
     </motion.div>

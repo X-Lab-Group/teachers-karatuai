@@ -1,0 +1,14 @@
+{
+  "name": "karatuai-generate",
+  "version": "1.0.0",
+  "description": "GCP Cloud Function (gen 2) that proxies teacher prompts to Gemini.",
+  "type": "module",
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.4.0",
+    "@google/generative-ai": "^0.24.0"
+  }
+}
