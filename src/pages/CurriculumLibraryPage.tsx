@@ -25,7 +25,7 @@ import {
   deleteCurriculum,
   findCurriculum,
 } from '../lib/db'
-import { COUNTRY_PRESETS } from '../lib/local-context'
+import { COUNTRY_OPTIONS, getCountryPreset } from '../lib/local-context'
 import {
   countCurriculumSignals,
   getCurriculumSignalGroups,
@@ -34,7 +34,6 @@ import {
 import { SUBJECTS, LEVELS } from '../lib/constants'
 import type { Curriculum, EducationLevel, Subject } from '../types'
 
-const COUNTRY_OPTIONS = COUNTRY_PRESETS.map((c) => ({ value: c.code, label: c.name }))
 const MAX_PDF_BYTES = 20 * 1024 * 1024
 const PREVIEW_CHARS = 320
 
@@ -114,7 +113,7 @@ export default function CurriculumLibraryPage() {
 
     const subjectLabel = SUBJECTS.find((s) => s.value === formData.subject)?.label ?? formData.subject
     const countryLabel =
-      COUNTRY_PRESETS.find((c) => c.code === formData.country)?.name ?? formData.country
+      getCountryPreset(formData.country)?.name ?? formData.country
     const autoTitle = `${countryLabel} · ${subjectLabel} · ${formData.grade}`
 
     let id: string
@@ -427,7 +426,7 @@ export default function CurriculumLibraryPage() {
             const subjectLabel =
               SUBJECTS.find((s) => s.value === c.subject)?.label ?? c.subject
             const countryLabel =
-              COUNTRY_PRESETS.find((p) => p.code === c.country)?.name ?? c.country
+              getCountryPreset(c.country)?.name ?? c.country
             const preview = c.parsedText.slice(0, PREVIEW_CHARS)
             const signalCount = c.structure ? countCurriculumSignals(c.structure) : 0
             return (
@@ -538,7 +537,7 @@ function CurriculumDetailView({
   const subjectLabel =
     SUBJECTS.find((s) => s.value === curriculum.subject)?.label ?? curriculum.subject
   const countryLabel =
-    COUNTRY_PRESETS.find((p) => p.code === curriculum.country)?.name ?? curriculum.country
+    getCountryPreset(curriculum.country)?.name ?? curriculum.country
   const levelLabel = LEVELS.find((l) => l.value === curriculum.level)?.label ?? curriculum.level
   const structure = getCurriculumStructure(curriculum)
   const signalGroups = getCurriculumSignalGroups(structure)

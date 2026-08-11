@@ -1,7 +1,7 @@
 import { useId, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, ShieldCheck, Sparkles, X } from 'lucide-react'
-import { COUNTRY_PRESETS } from '../lib/local-context'
+import { COUNTRY_OPTIONS } from '../lib/local-context'
 import {
   CLASSROOM_EDUCATION_LEVELS,
   type ClassroomEducationLevel,
@@ -218,10 +218,11 @@ function FormBody({
             className="w-full px-4 py-3 rounded-xl border border-slate-300 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition"
           >
             <option value="">Select your country…</option>
-            {COUNTRY_PRESETS.map((c) => (
-              <option key={c.code} value={c.name}>{c.name}</option>
+            {COUNTRY_OPTIONS.map((c) => (
+              <option key={c.value} value={c.label}>
+                {c.label}
+              </option>
             ))}
-            <option value="Other">Other</option>
           </select>
         </Field>
 
