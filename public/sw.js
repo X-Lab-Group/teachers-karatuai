@@ -1,7 +1,7 @@
 const STATIC_CACHE = 'karatuai-static-v6'
 const MODEL_CACHE = 'karatuai-model-cache-v5'
-const MODEL_HOST = 'models.karatuai.com'
-const MODEL_PATH = '/gemma-4-E2B-it-web.task'
+const MODEL_HOST = 'storage.googleapis.com'
+const MODEL_PATH = '/karatuai-models/gemma-4-E2B-it-web.task'
 const PRECACHE = [
   '/',
   '/manifest.json',

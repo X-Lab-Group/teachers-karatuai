@@ -5,7 +5,7 @@ const LEGACY_CACHE_NAMES = [
   'karatuai-model-cache-v3',
   'karatuai-model-cache-v4',
 ]
-const MODEL_URL = 'https://models.karatuai.com/gemma-4-E2B-it-web.task'
+const MODEL_URL = 'https://storage.googleapis.com/karatuai-models/gemma-4-E2B-it-web.task'
 const EXPECTED_SIZE = 2_003_697_664
 
 // 50 MB chunks balance two failure modes on phones: small enough that an
